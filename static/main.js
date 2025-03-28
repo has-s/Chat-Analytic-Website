@@ -1,14 +1,33 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.querySelector('form');
-    const input = document.getElementById('vod_url');
+document.addEventListener("DOMContentLoaded", function() {
+    const taskId = document.getElementById("task_id").value;
+    const statusMessage = document.getElementById("status_message");
+    let intervalId;
 
-    form.addEventListener('submit', (event) => {
-        const vodUrl = input.value.trim();
-
-        if (!vodUrl) {
-            alert("Пожалуйста, введите URL трансляции.");
-            event.preventDefault();
-            return;
+    if (taskId) {
+        // Функция для проверки статуса задачи
+        function checkTaskStatus() {
+            fetch(`/check_status/${taskId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'pending') {
+                        statusMessage.textContent = "Задача в процессе выполнения, подождите...";
+                    } else if (data.status === 'success') {
+                        statusMessage.textContent = `Задача выполнена. Не переживай, она сохранена!`;
+                        clearInterval(intervalId); // Остановка таймера после выполнения
+                    } else if (data.status === 'failure') {
+                        statusMessage.textContent = `Ошибка: ${data.result}`;
+                        clearInterval(intervalId); // Остановка таймера при ошибке
+                    } else {
+                        statusMessage.textContent = "Неизвестный статус задачи.";
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при проверке статуса задачи:', error);
+                    clearInterval(intervalId); // Остановка таймера при ошибке запроса
+                });
         }
-    });
+
+        // Запускаем проверку статуса каждые 2 секунды
+        intervalId = setInterval(checkTaskStatus, 1000);
+    }
 });
