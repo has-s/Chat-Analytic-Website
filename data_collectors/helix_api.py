@@ -21,6 +21,27 @@ if not TOKEN:
     exit(1)
 
 
+def extract_vod_id(url):
+    """
+    Извлекает vod_id из различных форматов ссылок Twitch.
+
+    :param url: Строка URL, содержащая ссылку на Twitch VOD.
+    :return: vod_id или None, если ID не найден.
+    """
+    # Регулярные выражения для разных форматов
+    patterns = [
+        r"https?://(?:www\.)?twitch\.tv/video/(\d+)",  # https://twitch.tv/video/{vod_id}
+        r"https?://(?:www\.)?twitch\.tv/(\d+)",  # https://www.twitch.tv/{vod_id}
+        r"twitch\.tv/video/(\d+)",  # video/{vod_id} на странице
+        r"(\d+)",  # {vod_id} в URL
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)  # Возвращаем найденный vod_id
+    return None  # Если ID не найден
+
 def get_headers():
     """Создает заголовки для запросов к Helix API."""
     return {
