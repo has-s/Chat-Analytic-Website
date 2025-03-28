@@ -7,7 +7,7 @@ from config import Config
 celery = make_celery()
 
 @celery.task
-def start_analysis_task(vod_id):
+def take_stream_data(vod_id):
     """Задача для анализа данных по VOD ID."""
     # Логика анализа
     return f"Данные для VOD ID {vod_id} успешно проанализированы."
