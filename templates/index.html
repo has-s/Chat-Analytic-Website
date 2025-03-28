@@ -3,23 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Загрузка данных</title>
+    <title>VOD Анализатор</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <script src="{{ url_for('static', filename='main.js') }}" defer></script>
 </head>
 <body>
     <div class="container">
-        <h1>Загрузка данных с Twitch</h1>
-        <div class="input-group">
-            <input type="text" id="video_id" placeholder="Введите ID или ссылку на трансляцию">
-            <button id="submit">Загрузить</button>
-        </div>
-        <div id="loading" class="hidden">
-        <img src="{{ url_for('static', filename='spinner.gif') }}" alt="Загрузка..." />
-        </div>
-        <div id="status" class="status">Ожидание ввода...</div>
-        <pre id="output" class="output"></pre>
-    </div>
+        <h1>Анализатор VOD на Twitch</h1>
+        <form action="/" method="POST">
+            <label for="vod_url">URL трансляции (VOD):</label>
+            <input type="text" id="vod_url" name="vod_url" placeholder="Введите URL трансляции" required>
+            <button type="submit">Начать анализ</button>
+        </form>
 
+        {% if message %}
+            <div class="message">
+                <p>{{ message }}</p>
+            </div>
+        {% endif %}
+
+        <script src="{{ url_for('static', filename='main.js') }}"></script>
+    </div>
 </body>
 </html>
