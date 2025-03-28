@@ -1,16 +1,20 @@
-import requests
-from flask import Flask, request, jsonify, render_template
-from data_collectors.helix_api import extract_vod_id, get_streamer_id  # Импортируем нужные функции
+from flask import Flask, render_template, request
+from celery_config import make_celery
+from tasks import start_analysis_task
+from data_collectors.helix_api import extract_vod_id, get_streamer_id
 
 app = Flask(__name__)
+app.config.from_object('config.Config')
 
+# Настроим Celery
+celery = make_celery()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    message = None  # Сообщение для отображения на странице
+    message = None
 
     if request.method == 'POST':
-        vod_url = request.form.get('vod_url')  # Получаем URL трансляции (может быть разного формата)
+        vod_url = request.form.get('vod_url')
 
         # Извлечение vod_id из URL
         vod_id = extract_vod_id(vod_url)
