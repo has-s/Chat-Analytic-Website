@@ -18,3 +18,19 @@ def save_stream_task(self, vod_id):
             return {'status': 'error', 'message': 'Ошибка при сохранении файла.'}
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+@app.task(bind=True)
+def run_analysis_task(self, vod_id, metrics, top_chatters_count=10, keywords="", top_pastes_count=10, emoticons_count=10):
+    try:
+        # Заглушка - возвращаем полученные данные
+        received_data = {
+            "vod_id": vod_id,
+            "metrics": metrics,
+            "top_chatters_count": top_chatters_count,
+            "keywords": keywords,
+            "top_pastes_count": top_pastes_count,
+            "emoticons_count": emoticons_count,
+        }
+        return {'status': 'success', 'received_data': received_data}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
