@@ -9,7 +9,8 @@
     <h1>Форма для загрузки данных</h1>
     <form method="POST">
         <label for="vod_url">Введите URL трансляции:</label>
-        <input type="text" id="vod_url" name="vod_url" required>
+        <!-- Поле теперь сохраняет значение -->
+        <input type="text" id="vod_url" name="vod_url" value="{{ vod_url }}" required>
         <button type="submit">Отправить</button>
     </form>
 
@@ -19,8 +20,30 @@
 
     {% if task_id %}
         <input type="hidden" id="task_id" value="{{ task_id }}">
-        <p id="status_message"></p>  <!-- Пустое сообщение, которое будет обновляться -->
+        <p id="status_message"></p>
     {% endif %}
+
+    <!-- Форма аналитики -->
+    <form id="analytics_form" method="POST" action="/run_analysis" style="display: none;">
+        <h2>Настройки аналитики</h2>
+        <label>
+            Показать сообщения в минуту
+            <input type="checkbox" name="metrics" value="messages_per_minute" checked>
+        </label><br>
+        <label>
+            Показать уникальных пользователей в минуту
+            <input type="checkbox" name="metrics" value="unique_users_per_minute" checked>
+        </label><br>
+        <label>
+            Показать топ-10 паст
+            <input type="checkbox" name="metrics" value="top_pastes" checked>
+        </label><br>
+        <label>
+            Показать топ-10 активных пользователей
+            <input type="checkbox" name="metrics" value="top_active_users" checked>
+        </label><br>
+        <button type="submit">Запустить аналитику</button>
+    </form>
 
     <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>

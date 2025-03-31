@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function() {
     const taskId = document.getElementById("task_id").value;
     const statusMessage = document.getElementById("status_message");
+    const analyticsForm = document.getElementById("analytics_form"); // Ссылка на форму аналитики
     let intervalId;
 
     if (taskId) {
@@ -14,6 +15,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     } else if (data.status === 'success') {
                         statusMessage.textContent = `Задача выполнена. Не переживай, она сохранена!`;
                         clearInterval(intervalId); // Остановка таймера после выполнения
+
+                        // Показываем форму аналитики
+                        if (analyticsForm) {
+                            analyticsForm.style.display = "block";
+                        }
                     } else if (data.status === 'failure') {
                         statusMessage.textContent = `Ошибка: ${data.result}`;
                         clearInterval(intervalId); // Остановка таймера при ошибке
