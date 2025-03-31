@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
+    const vodForm = document.getElementById("vodForm");
     const taskId = document.getElementById("task_id").value;
     const statusMessage = document.getElementById("status_message");
     const analyticsForm = document.getElementById("analytics_form"); // Ссылка на форму аналитики
@@ -30,10 +31,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 .catch(error => {
                     console.error('Ошибка при проверке статуса задачи:', error);
                     clearInterval(intervalId); // Остановка таймера при ошибке запроса
+                    statusMessage.textContent = "Ошибка при проверке статуса задачи.";
                 });
         }
 
-        // Запускаем проверку статуса каждые 2 секунды
+        // Запускаем проверку статуса каждые 1 секунду
         intervalId = setInterval(checkTaskStatus, 1000);
     }
 });

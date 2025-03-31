@@ -26,22 +26,51 @@
     <!-- Форма аналитики -->
     <form id="analytics_form" method="POST" action="/run_analysis" style="display: none;">
         <h2>Настройки аналитики</h2>
-        <label>
-            Показать сообщения в минуту
-            <input type="checkbox" name="metrics" value="messages_per_minute" checked>
-        </label><br>
-        <label>
-            Показать уникальных пользователей в минуту
-            <input type="checkbox" name="metrics" value="unique_users_per_minute" checked>
-        </label><br>
-        <label>
-            Показать топ-10 паст
+
+        <!-- Топ чаттеры -->
+        <div>
+            <input type="checkbox" name="metrics" value="top_chatters" checked>
+            <label for="top_chatters">Топ чаттеры</label>
+            <div>
+                <label for="top_chatters_count">Количество:</label>
+                <input type="number" id="top_chatters_count" name="top_chatters_count" min="1" value="10" required>
+            </div>
+        </div>
+        <br>
+
+        <!-- Ключевые слова -->
+        <div>
+            <input type="checkbox" name="metrics" value="keywords_search" checked>
+            <label for="keywords_search">Поиск по ключевым словам</label>
+            <div>
+                <label for="keywords">Ключевые слова (через запятую):</label>
+                <input type="text" id="keywords" name="keywords" placeholder="Ключевые слова">
+            </div>
+        </div>
+        <br>
+
+        <!-- Поиск паст -->
+        <div>
             <input type="checkbox" name="metrics" value="top_pastes" checked>
-        </label><br>
-        <label>
-            Показать топ-10 активных пользователей
-            <input type="checkbox" name="metrics" value="top_active_users" checked>
-        </label><br>
+            <label for="top_pastes">Поиск паст</label>
+            <div>
+                <label for="top_pastes_count">Количество:</label>
+                <input type="number" id="top_pastes_count" name="top_pastes_count" min="1" value="10" required>
+            </div>
+        </div>
+        <br>
+
+        <!-- Топ смайликов -->
+        <div>
+            <input type="checkbox" name="metrics" value="top_emoticons" checked>
+            <label for="top_emoticons">Топ смайликов</label>
+            <div>
+                <label for="emoticons_count">Количество:</label>
+                <input type="number" id="emoticons_count" name="emoticons_count" min="1" value="10" required>
+            </div>
+        </div>
+        <br>
+
         <button type="submit">Запустить аналитику</button>
     </form>
 

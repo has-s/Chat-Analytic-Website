@@ -1,4 +1,3 @@
-import time
 from celery import Celery
 from data_processors.stream_compose import collect_stream_data, save_stream_data
 
