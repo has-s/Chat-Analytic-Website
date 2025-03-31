@@ -1,41 +1,95 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", () => {
     const vodForm = document.getElementById("vodForm");
-    const taskId = document.getElementById("task_id").value;
     const statusMessage = document.getElementById("status_message");
-    const analyticsForm = document.getElementById("analytics_form"); // Ссылка на форму аналитики
+    const analyticsForm = document.getElementById("analytics_form");
     let intervalId;
 
-    if (taskId) {
-        // Функция для проверки статуса задачи
-        function checkTaskStatus() {
-            fetch(`/check_status/${taskId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'pending') {
-                        statusMessage.textContent = "Задача в процессе выполнения, подождите...";
-                    } else if (data.status === 'success') {
-                        statusMessage.textContent = `Задача выполнена. Не переживай, она сохранена!`;
-                        clearInterval(intervalId); // Остановка таймера после выполнения
+    // Обработчик отправки формы VOD
+    vodForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-                        // Показываем форму аналитики
-                        if (analyticsForm) {
-                            analyticsForm.style.display = "block";
-                        }
-                    } else if (data.status === 'failure') {
-                        statusMessage.textContent = `Ошибка: ${data.result}`;
-                        clearInterval(intervalId); // Остановка таймера при ошибке
-                    } else {
-                        statusMessage.textContent = "Неизвестный статус задачи.";
-                    }
-                })
-                .catch(error => {
-                    console.error('Ошибка при проверке статуса задачи:', error);
-                    clearInterval(intervalId); // Остановка таймера при ошибке запроса
-                    statusMessage.textContent = "Ошибка при проверке статуса задачи.";
-                });
+        try {
+            const formData = new FormData(vodForm);
+            const response = await fetch("/", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Если данные успешно загружены
+                if (data.task_id) {
+                    statusMessage.textContent = "Данные загружены. Можно запускать аналитику.";
+                    analyticsForm.style.display = "block"; // Показать форму аналитики
+                } else {
+                    statusMessage.textContent = data.message || "Ошибка загрузки данных.";
+                    analyticsForm.style.display = "none"; // Скрыть форму аналитики
+                }
+            } else {
+                // Обработка ошибки, если статус не OK (например, код 400)
+                statusMessage.textContent = data.message || "Ошибка загрузки данных.";
+                analyticsForm.style.display = "none"; // Скрыть форму аналитики
+            }
+
+        } catch (error) {
+            statusMessage.textContent = "Ошибка при загрузке данных.";
+            analyticsForm.style.display = "none"; // Скрыть форму аналитики
+            console.error(error);
         }
+    });
 
-        // Запускаем проверку статуса каждые 1 секунду
-        intervalId = setInterval(checkTaskStatus, 1000);
+    // Обработчик отправки формы аналитики
+    analyticsForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        try {
+            const formData = new FormData(analyticsForm);
+            const response = await fetch("/run_analysis", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+            if (data.status === "success") {
+                checkAnalysisStatus(data.task_id);
+            } else {
+                statusMessage.textContent = "Ошибка запуска аналитики.";
+            }
+        } catch (error) {
+            statusMessage.textContent = "Ошибка при отправке формы аналитики.";
+            console.error(error);
+        }
+    });
+
+    // Функция проверки статуса аналитики
+    function checkAnalysisStatus(taskId) {
+        intervalId = setInterval(async () => {
+            try {
+                const response = await fetch(`/check_status/${taskId}`);
+                const data = await response.json();
+
+                switch (data.status) {
+                    case 'pending':
+                        statusMessage.textContent = "Аналитика выполняется, подождите...";
+                        break;
+                    case 'success':
+                        statusMessage.textContent = "Аналитика завершена. Результаты: " + JSON.stringify(data.result);
+                        clearInterval(intervalId);
+                        break;
+                    case 'failure':
+                        statusMessage.textContent = "Ошибка выполнения аналитики: " + data.result;
+                        clearInterval(intervalId);
+                        break;
+                    default:
+                        statusMessage.textContent = "Неизвестный статус задачи.";
+                        clearInterval(intervalId);
+                }
+            } catch (error) {
+                statusMessage.textContent = "Ошибка проверки статуса.";
+                clearInterval(intervalId);
+                console.error(error);
+            }
+        }, 1000);
     }
 });
