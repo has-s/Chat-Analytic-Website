@@ -4,9 +4,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const analyticsForm = document.getElementById("analytics_form");
     let intervalId;
 
+    // Изначально форма аналитики скрыта
+    analyticsForm.style.display = "none";
+
     // Обработчик отправки формы VOD
     vodForm.addEventListener("submit", async (event) => {
         event.preventDefault();
+
+        // Скрываем форму аналитики при новой загрузке данных
+        analyticsForm.style.display = "none"; // Прячем форму аналитики
+        statusMessage.textContent = "Загружаем данные...";
 
         try {
             const formData = new FormData(vodForm);
@@ -18,78 +25,47 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
 
             if (response.ok) {
-                // Если данные успешно загружены
                 if (data.task_id) {
-                    statusMessage.textContent = "Данные загружены. Можно запускать аналитику.";
-                    analyticsForm.style.display = "block"; // Показать форму аналитики
+                    statusMessage.textContent = "Данные загружаются, подождите...";
+                    // Проверяем статус задачи загрузки данных
+                    await checkDataLoadingStatus(data.task_id);
                 } else {
-                    statusMessage.textContent = data.message || "Ошибка загрузки данных.";
-                    analyticsForm.style.display = "none"; // Скрыть форму аналитики
+                    // Сообщаем о том, что данные уже загружены
+                    statusMessage.textContent = data.message || "Данные уже загружены.";
                 }
             } else {
-                // Обработка ошибки, если статус не OK (например, код 400)
+                // Обработка ошибки
                 statusMessage.textContent = data.message || "Ошибка загрузки данных.";
-                analyticsForm.style.display = "none"; // Скрыть форму аналитики
             }
 
         } catch (error) {
             statusMessage.textContent = "Ошибка при загрузке данных.";
-            analyticsForm.style.display = "none"; // Скрыть форму аналитики
             console.error(error);
         }
     });
 
-    // Обработчик отправки формы аналитики
-    analyticsForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
+    // Функция для проверки статуса загрузки данных
+    async function checkDataLoadingStatus(taskId) {
         try {
-            const formData = new FormData(analyticsForm);
-            const response = await fetch("/run_analysis", {
-                method: "POST",
-                body: formData
-            });
-
+            const response = await fetch(`/check_status/${taskId}`);
             const data = await response.json();
-            if (data.status === "success") {
-                checkAnalysisStatus(data.task_id);
+
+            if (data.status === 'success') {
+                // Если загрузка данных завершена успешно, показываем форму аналитики
+                statusMessage.textContent = "Данные загружены. Можно запускать аналитику.";
+                analyticsForm.style.display = "block"; // Показать форму аналитики
+            } else if (data.status === 'failure') {
+                // Если произошла ошибка, выводим сообщение
+                statusMessage.textContent = "Ошибка при загрузке данных: " + data.result;
             } else {
-                statusMessage.textContent = "Ошибка запуска аналитики.";
+                // Пока данные еще загружаются
+                statusMessage.textContent = "Данные загружаются, подождите...";
+                setTimeout(() => checkDataLoadingStatus(taskId), 1000); // Проверяем каждые 2 секунды
             }
+
         } catch (error) {
-            statusMessage.textContent = "Ошибка при отправке формы аналитики.";
+            statusMessage.textContent = "Ошибка при проверке статуса загрузки.";
             console.error(error);
         }
-    });
-
-    // Функция проверки статуса аналитики
-    function checkAnalysisStatus(taskId) {
-        intervalId = setInterval(async () => {
-            try {
-                const response = await fetch(`/check_status/${taskId}`);
-                const data = await response.json();
-
-                switch (data.status) {
-                    case 'pending':
-                        statusMessage.textContent = "Аналитика выполняется, подождите...";
-                        break;
-                    case 'success':
-                        statusMessage.textContent = "Аналитика завершена. Результаты: " + JSON.stringify(data.result);
-                        clearInterval(intervalId);
-                        break;
-                    case 'failure':
-                        statusMessage.textContent = "Ошибка выполнения аналитики: " + data.result;
-                        clearInterval(intervalId);
-                        break;
-                    default:
-                        statusMessage.textContent = "Неизвестный статус задачи.";
-                        clearInterval(intervalId);
-                }
-            } catch (error) {
-                statusMessage.textContent = "Ошибка проверки статуса.";
-                clearInterval(intervalId);
-                console.error(error);
-            }
-        }, 1000);
     }
 });
