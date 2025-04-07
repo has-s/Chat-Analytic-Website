@@ -6,7 +6,6 @@ from data_collectors.emote import load_emotes
 from data_collectors.chat_download import download_chat_to_file
 from data_collectors.category_parser import process_url  # Добавлен парсер категорий
 
-
 load_dotenv()
 PROJECT_ROOT = os.getenv('PROJECT_ROOT')
 
@@ -19,6 +18,31 @@ def check_existing_data(video_id):
     """Проверяет, существует ли уже файл с данными трансляции."""
     output_path = os.path.join(OUTPUT_DIR, f"{video_id}.json")
     return os.path.exists(output_path)
+
+
+def get_chat_data(vod_id):
+    """Получает чат-данные для известного vod_id из файла."""
+    chat_file_path = os.path.join(PROJECT_ROOT, f"stream_data/{vod_id}.json")
+
+    try:
+        # Проверяем, существует ли файл
+        if not os.path.exists(chat_file_path):
+            print(f"❌ Файл с чатом для VOD {vod_id} не найден.")
+            return None
+
+        # Открываем и читаем данные из файла
+        with open(chat_file_path, "r", encoding="utf-8") as f:
+            chat_data = json.load(f)
+
+        if not chat_data:
+            print(f"❌ Чат для VOD {vod_id} пуст.")
+            return None
+
+        return chat_data
+
+    except Exception as e:
+        print(f"❌ Ошибка при чтении чата для VOD {vod_id}: {e}")
+        return None
 
 
 def collect_stream_data(video_id):
@@ -42,8 +66,10 @@ def collect_stream_data(video_id):
     # 3. Загружаем эмоуты стримера
     emotes = load_emotes(user_id)
 
-    # 4. Загружаем чат трансляции
-    chat_data = download_chat_to_file(video_id)
+    # 4. Получаем чат данных через новую функцию
+    chat_data = get_chat_data(video_id)
+    if not chat_data:
+        return None  # Не удалось получить чат данных
 
     # 5. Извлекаем категории (смена игр и разделов)
     categories = process_url(video_id)
