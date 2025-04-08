@@ -59,10 +59,5 @@ def check_status(task_id):
     else:
         return jsonify({"status": "unknown"})
 
-@app.route('/test', methods=['GET', 'POST'])
-def ll():
-    return render_template('i.html')
-
-
 if __name__ == "__main__":
     app.run(debug=True)
