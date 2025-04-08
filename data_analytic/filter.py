@@ -21,13 +21,18 @@ def filter_messages_by_keywords(chat_data, keywords, use_regex=False, match_case
         compiled_keywords = [re.compile(kw, regex_flags) for kw in keywords]
 
     for msg in chat_data:
-        text = msg["message"]["body"]
+        # Проверяем, что msg — это словарь и содержит ключ "message"
+        if isinstance(msg, dict) and "message" in msg:
+            text = msg["message"].get("body", "")
 
-        if use_regex:
-            if any(pattern.search(text) for pattern in compiled_keywords):
-                filtered_messages.append(msg)
+            if use_regex:
+                if any(pattern.search(text) for pattern in compiled_keywords):
+                    filtered_messages.append(msg)
+            else:
+                if any(kw.lower() in text.lower() for kw in keywords):
+                    filtered_messages.append(msg)
         else:
-            if any(kw.lower() in text.lower() for kw in keywords):
-                filtered_messages.append(msg)
+            # Если структура неправильная или это не сообщение, выводим предупреждение
+            print(f"Предупреждение: Не обрабатываем элемент: {msg}")
 
     return filtered_messages
