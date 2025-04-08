@@ -2,15 +2,13 @@ import json
 import re
 from collections import defaultdict
 from difflib import SequenceMatcher
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 
 # === ПАРАМЕТРЫ ===
 PASTA_MIN_LENGTH = 10  # Минимальная длина пасты
 SIMILARITY_THRESHOLD = 0.8  # Порог схожести для группировки
-
-import os
-from pathlib import Path
-import json
-from dotenv import load_dotenv
 
 # Загрузка переменных среды
 load_dotenv()
@@ -21,10 +19,9 @@ PROJECT_ROOT = os.getenv("PROJECT_ROOT")
 if not PROJECT_ROOT:
     raise ValueError("PROJECT_ROOT не задан в переменных окружения.")
 
-
 # Функция загрузки чата по stream_id
 def load_chat_data(stream_id):
-    """Функция загрузки чата по stream_id (заглушка, нужно реализовать отдельно)."""
+    """Функция загрузки чата по stream_id"""
     # Строим абсолютный путь к файлу
     file_path = Path(PROJECT_ROOT) / "stream_data" / f"{stream_id}.json"
 
@@ -34,26 +31,12 @@ def load_chat_data(stream_id):
     with open(file_path, "r", encoding="utf-8") as file:
         return json.load(file)["chat"]
 
-
-# Получаем путь к проекту из переменной окружения (или по умолчанию).
-PROJECT_ROOT = os.getenv("PROJECT_ROOT", Path(__file__).resolve().parent)
-
-def load_chat_data(stream_id):
-    """Загружает данные чата по stream_id."""
-    file_path = Path(PROJECT_ROOT) / "stream_data" / f"{stream_id}.json"
-
-    if not file_path.exists():
-        raise FileNotFoundError(f"Файл {file_path} не найден.")
-
-    with open(file_path, "r", encoding="utf-8") as file:
-        return json.load(file)["chat"]
-
-
+# Функция нормализации текста
 def normalize_text(text):
     """Приводит текст к форме без пробелов и знаков препинания, но сохраняет регистр"""
     return re.sub(r"[^\w\d]+", "", text)
 
-
+# Функция для извлечения паст из чата
 def extract_pastas(chat_data):
     """Извлекает повторяющиеся пасты из чата"""
     pasta_counter = defaultdict(list)
@@ -69,7 +52,7 @@ def extract_pastas(chat_data):
 
     return {text: ids for text, ids in pasta_counter.items() if len(ids) > 1}
 
-
+# Функция для группировки паст по схожести
 def group_similar_pastas(pasta_data):
     """Группирует пасты по схожести"""
     grouped_pastas = []
@@ -83,7 +66,6 @@ def group_similar_pastas(pasta_data):
         group = {
             "base_pasta": base_pasta,
             "count": len(message_ids),
-            "messages": message_ids,
             "variants": []
         }
 
@@ -97,8 +79,7 @@ def group_similar_pastas(pasta_data):
             if similarity >= SIMILARITY_THRESHOLD:
                 group["variants"].append({
                     "text": other_pasta,
-                    "count": len(other_ids),
-                    "messages": other_ids
+                    "count": len(other_ids)
                 })
                 seen.add(other_pasta)
 
@@ -107,24 +88,27 @@ def group_similar_pastas(pasta_data):
 
     return grouped_pastas
 
-
-def get_pastas_for_stream(stream_id):
+# Основная функция для получения паст
+def get_pastas_for_stream(stream_id, top_n=None):
     """Основная функция: загружает чат, анализирует пасты и возвращает их отсортированными."""
     chat_data = load_chat_data(stream_id)
     pastas = extract_pastas(chat_data)
     grouped_pastas = group_similar_pastas(pastas)
-    return grouped_pastas
-
+    return grouped_pastas[:top_n]  # Ограничиваем количество выводимых паст
 
 # === ПРИМЕР ИСПОЛЬЗОВАНИЯ ===
 if __name__ == "__main__":
     stream_id = "2406296141"  # ID нужной трансляции
-    result = get_pastas_for_stream(stream_id)
+    top_n = 10  # Количество паст для вывода
 
-    print("🔍 ТОП-10 ПАСТ:")
-    for i, pasta in enumerate(result[:10], 1):
-        print(f"{i}. {pasta['base_pasta']} ({pasta['count']} повторов)")
+    # Получение паст
+    result = get_pastas_for_stream(stream_id, top_n=top_n)
+
+    # Отображение данных в нужной форме
+    print(f"🔍 ТОП-{top_n} ПАСТ:")
+    for i, pasta in enumerate(result, 1):
+        print(f"{i}. Базовая паста: {pasta['base_pasta']} — Количество: {pasta['count']}")
         if pasta["variants"]:
-            print("   🔹 Варианты:")
+            print("   🔹 Подпасты:")
             for variant in pasta["variants"]:
-                print(f"      - {variant['text']} ({variant['count']} повторов)")
+                print(f"      - {variant['text']} — Количество: {variant['count']}")
