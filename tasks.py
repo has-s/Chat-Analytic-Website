@@ -1,5 +1,6 @@
 from celery import Celery
 from data_processors.stream_compose import collect_stream_data, save_stream_data
+from data_processors.analytic_composer import analyze_stream_data
 
 # Пример создания Celery приложения
 app = Celery('tasks', broker='pyamqp://guest@localhost//')
@@ -22,15 +23,34 @@ def save_stream_task(self, vod_id):
 @app.task(bind=True)
 def run_analysis_task(self, vod_id, metrics, top_chatters_count=10, keywords="", top_pastes_count=10, emoticons_count=10):
     try:
-        # Заглушка - возвращаем полученные данные
-        received_data = {
-            "vod_id": vod_id,
-            "metrics": metrics,
-            "top_chatters_count": top_chatters_count,
-            "keywords": keywords,
-            "top_pastes_count": top_pastes_count,
-            "emoticons_count": emoticons_count,
+        # Подготовка входных данных в нужной структуре
+        input_data = {
+            "received_data": {
+                "vod_id": vod_id,
+                "metrics": metrics,
+                "top_chatters_count": top_chatters_count,
+                "keywords": keywords,
+                "top_pastes_count": top_pastes_count,
+                "emoticons_count": emoticons_count,
+            },
+            "status": "success"
         }
-        return {'status': 'success', 'received_data': received_data}
+
+        # Вызов основной аналитической функции
+        analysis_result = analyze_stream_data(input_data)
+
+        # Если внутри анализа что-то пошло не так — пробрасываем сообщение
+        if isinstance(analysis_result, dict) and analysis_result.get("status") == "error":
+            return {
+                "status": "error",
+                "message": analysis_result.get("message", "Неизвестная ошибка анализа")
+            }
+
+        return {
+            "status": "success",
+            "received_data": input_data["received_data"],
+            "analysis_result": analysis_result
+        }
+
     except Exception as e:
-        return {'status': 'error', 'message': str(e)}
+        return {"status": "error", "message": str(e)}

@@ -1,6 +1,5 @@
 import json
 from data_analytic.filter import filter_messages_by_keywords
-
 from data_processors.stream_compose import get_chat_data
 
 def analyze_chat_activity(chat_data, keywords=None, use_regex=False, match_case=True):
@@ -59,7 +58,4 @@ def analyze_chat_activity(chat_data, keywords=None, use_regex=False, match_case=
     }
 
 if __name__ == "__main__":
-    video_id = "2406296141"
-    data = get_chat_data(video_id)
-
-    print(analyze_emotes(data))
+    pass
