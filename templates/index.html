@@ -4,6 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Форма для загрузки данных</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            margin-top: 20px;
+        }
+
+        #results img {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .emote {
+            display: inline-block;
+            margin: 5px;
+            text-align: center;
+        }
+
+        .emote img {
+            border-radius: 4px;
+            background: #f0f0f0;
+            padding: 2px;
+        }
+    </style>
 </head>
 <body>
     <h1>Форма для загрузки данных</h1>
@@ -15,6 +46,7 @@
 
     <form id="analytics_form" method="POST" style="display: none;">
         <h2>Настройки аналитики</h2>
+
         <div>
             <input type="checkbox" name="metrics" value="top_chatters" checked>
             <label>Топ чаттеры</label>
@@ -43,8 +75,9 @@
     </form>
 
     <p id="status_message"></p>
+    <div id="results" style="margin-top: 20px;"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
-
 </body>
 </html>

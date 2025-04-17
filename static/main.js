@@ -2,120 +2,220 @@ document.addEventListener("DOMContentLoaded", () => {
     const vodForm = document.getElementById("vodForm");
     const statusMessage = document.getElementById("status_message");
     const analyticsForm = document.getElementById("analytics_form");
+    const resultsContainer = document.getElementById("results");
     let intervalId;
 
-    // Изначально форма аналитики скрыта
+    // Скрываем форму аналитики до загрузки VOD
     analyticsForm.style.display = "none";
 
-    // Обработчик отправки формы VOD
+    // Отправка URL VOD
     vodForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-
-        // Скрываем форму аналитики при новой загрузке данных
-        analyticsForm.style.display = "none"; // Прячем форму аналитики
+        analyticsForm.style.display = "none";
+        resultsContainer.innerHTML = "";
         statusMessage.textContent = "Загружаем данные...";
 
         try {
             const formData = new FormData(vodForm);
-            const response = await fetch("/", {
-                method: "POST",
-                body: formData
-            });
-
+            const response = await fetch("/", { method: "POST", body: formData });
             const data = await response.json();
 
-            if (response.ok) {
-                // Если данные успешно загружены
-                if (data.task_id) {
-                    statusMessage.textContent = "Данные загружаются, подождите...";
-                    // Проверяем статус задачи загрузки данных
-                    await checkDataLoadingStatus(data.task_id);
-                } else {
-                    statusMessage.textContent = data.message || "Ошибка загрузки данных.";
-                }
+            if (response.ok && data.task_id) {
+                statusMessage.textContent = "Данные загружаются, подождите...";
+                await checkDataLoadingStatus(data.task_id);
             } else {
-                // Обработка ошибки, если статус не OK (например, код 400)
                 statusMessage.textContent = data.message || "Ошибка загрузки данных.";
             }
-
-        } catch (error) {
+        } catch (err) {
             statusMessage.textContent = "Ошибка при загрузке данных.";
-            console.error(error);
+            console.error(err);
         }
     });
 
-    // Функция для проверки статуса загрузки данных
+    // Проверка статуса загрузки VOD
     async function checkDataLoadingStatus(taskId) {
         try {
             const response = await fetch(`/check_status/${taskId}`);
             const data = await response.json();
 
-            if (data.status === 'success') {
+            if (data.status === "success") {
                 statusMessage.textContent = "Данные загружены. Можно запускать аналитику.";
-                analyticsForm.style.display = "block"; // Показать форму аналитики
-            } else if (data.status === 'failure') {
+                analyticsForm.style.display = "block";
+            } else if (data.status === "failure") {
                 statusMessage.textContent = "Ошибка при загрузке данных: " + data.result;
             } else {
                 statusMessage.textContent = "Данные загружаются, подождите...";
-                setTimeout(() => checkDataLoadingStatus(taskId), 1000); // Проверяем статус каждые 1 секунду
+                setTimeout(() => checkDataLoadingStatus(taskId), 1000);
             }
-        } catch (error) {
+        } catch (err) {
             statusMessage.textContent = "Ошибка при проверке статуса загрузки.";
-            console.error(error);
+            console.error(err);
         }
     }
 
-    // Обработчик отправки формы аналитики
+    // Отправка настроек аналитики
     analyticsForm.addEventListener("submit", async (event) => {
         event.preventDefault();
+        resultsContainer.innerHTML = "";
+        statusMessage.textContent = "Запуск аналитики...";
 
         try {
             const formData = new FormData(analyticsForm);
-            const response = await fetch("/run_analysis", {
-                method: "POST",
-                body: formData
-            });
-
+            const response = await fetch("/run_analysis", { method: "POST", body: formData });
             const data = await response.json();
+
             if (data.status === "success") {
                 checkAnalysisStatus(data.task_id);
             } else {
                 statusMessage.textContent = "Ошибка запуска аналитики.";
             }
-        } catch (error) {
+        } catch (err) {
             statusMessage.textContent = "Ошибка при отправке формы аналитики.";
-            console.error(error);
+            console.error(err);
         }
     });
 
-    // Функция проверки статуса аналитики
+    // Поллинг статуса задачи аналитики
     function checkAnalysisStatus(taskId) {
         intervalId = setInterval(async () => {
             try {
                 const response = await fetch(`/check_status/${taskId}`);
                 const data = await response.json();
 
-                switch (data.status) {
-                    case 'pending':
-                        statusMessage.textContent = "Аналитика выполняется, подождите...";
-                        break;
-                    case 'success':
-                        statusMessage.textContent = "Аналитика завершена. Результаты: " + JSON.stringify(data.result);
-                        clearInterval(intervalId);
-                        break;
-                    case 'failure':
-                        statusMessage.textContent = "Ошибка выполнения аналитики: " + data.result;
-                        clearInterval(intervalId);
-                        break;
-                    default:
-                        statusMessage.textContent = "Неизвестный статус задачи.";
-                        clearInterval(intervalId);
+                if (data.status === "pending") {
+                    statusMessage.textContent = "Аналитика выполняется, подождите...";
+                } else if (data.status === "success") {
+                    statusMessage.textContent = "Аналитика завершена.";
+                    renderResults(data.result);
+                    clearInterval(intervalId);
+                } else {
+                    statusMessage.textContent = data.status === "failure"
+                        ? "Ошибка выполнения аналитики: " + data.result
+                        : "Неизвестный статус задачи.";
+                    clearInterval(intervalId);
                 }
-            } catch (error) {
+            } catch (err) {
                 statusMessage.textContent = "Ошибка проверки статуса.";
                 clearInterval(intervalId);
-                console.error(error);
+                console.error(err);
             }
         }, 1000);
+    }
+
+    // Рендер результатов
+    function renderResults(result) {
+        resultsContainer.innerHTML = "";
+        const res = result.analysis_result || {};
+
+        // Топ чаттеры
+        if (res.top_chatters) {
+            resultsContainer.innerHTML += "<h3>Топ чаттеры</h3>";
+            const ul = document.createElement("ul");
+            res.top_chatters.forEach(([name, count]) => {
+                const li = document.createElement("li");
+                li.textContent = `${name}: ${count} сообщений`;
+                ul.appendChild(li);
+            });
+            resultsContainer.appendChild(ul);
+        }
+
+        // Топ пасты
+        if (res.top_pastes) {
+            resultsContainer.innerHTML += "<h3>Топ пасты</h3>";
+            const ul = document.createElement("ul");
+            res.top_pastes.forEach(paste => {
+                const li = document.createElement("li");
+                li.innerHTML = `<strong>${paste.base_pasta}</strong> (${paste.count})`;
+                if (paste.variants?.length) {
+                    const sub = document.createElement("ul");
+                    paste.variants.forEach(v => {
+                        const sli = document.createElement("li");
+                        sli.textContent = `${v.text} (${v.count})`;
+                        sub.appendChild(sli);
+                    });
+                    li.appendChild(sub);
+                }
+                ul.appendChild(li);
+            });
+            resultsContainer.appendChild(ul);
+        }
+
+        // Топ смайлики
+        if (res.top_emoticons) {
+            resultsContainer.innerHTML += "<h3>Топ смайлики</h3>";
+            const grid = document.createElement("div");
+            grid.className = "emote-grid";
+            res.top_emoticons.forEach(emote => {
+                const wr = document.createElement("div");
+                wr.className = "emote";
+                wr.innerHTML = `
+                    <img src="${emote.url}" alt="${emote.name}" title="${emote.name}" width="32" height="32">
+                    <div>${emote.name}: ${emote.count}</div>
+                `;
+                grid.appendChild(wr);
+            });
+            resultsContainer.appendChild(grid);
+        }
+
+        // График активности по минутам
+        if (res.chat_activity?.messages_per_minute) {
+            // удаляем старый canvas, если есть
+            const old = document.getElementById("activityChart");
+            if (old) old.remove();
+
+            // создаём новый
+            const canvas = document.createElement("canvas");
+            canvas.id = "activityChart";
+            resultsContainer.innerHTML += "<h3>Активность по минутам</h3>";
+            resultsContainer.appendChild(canvas);
+
+            const allData = res.chat_activity.messages_per_minute;
+            const keywordData = res.chat_activity.keyword_messages_per_minute || {};
+
+            // собираем и сортируем минуты
+            const minutes = Array.from(new Set([
+                ...Object.keys(allData),
+                ...Object.keys(keywordData)
+            ]))
+            .map(m => parseInt(m, 10))
+            .sort((a, b) => a - b);
+
+            const total = minutes.map(m => allData[m] || 0);
+            const byKeyword = minutes.map(m => keywordData[m] || 0);
+
+            new Chart(canvas, {
+                type: "line",
+                data: {
+                    labels: minutes.map(m => `${m} мин`),
+                    datasets: [
+                        {
+                            label: "По ключевым словам",
+                            data: byKeyword,
+                            fill: true,
+                            tension: 0.5,
+                            borderColor: "#e74c3c",
+                            backgroundColor: "rgba(231, 76, 60, 0.2)"
+                        },
+                        {
+                            label: "Все сообщения",
+                            data: total,
+                            fill: true,
+                            tension: 0.5,
+                            borderColor: "#3498db",
+                            backgroundColor: "rgba(52, 152, 219, 0.1)"
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: { mode: "index", intersect: false },
+                    plugins: { legend: { position: "top" } },
+                    scales: {
+                        x: { title: { display: true, text: "Минута стрима" } },
+                        y: { beginAtZero: true, title: { display: true, text: "Количество сообщений" } }
+                    }
+                }
+            });
+        }
     }
 });

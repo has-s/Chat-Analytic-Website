@@ -30,9 +30,10 @@ def analyze_emotes(chat_data, top_n=None, include_platform=True):
         except (KeyError, TypeError):
             continue
 
-        for emote_name in emote_info:
-            if emote_name in text:
-                emote_counts[emote_name] = emote_counts.get(emote_name, 0) + 1
+        words = text.split()
+        for word in words:
+            if word in emote_info:
+                emote_counts[word] = emote_counts.get(word, 0) + 1
 
     # Сортировка
     sorted_emotes = sorted(emote_counts.items(), key=lambda item: item[1], reverse=True)
