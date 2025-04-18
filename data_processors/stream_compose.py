@@ -69,7 +69,12 @@ def collect_stream_data(video_id):
     # 4. Получаем чат данных через новую функцию
     chat_data = get_chat_data(video_id)
     if not chat_data:
-        return None  # Не удалось получить чат данных
+        print("💬 Чат не найден. Пробуем скачать...")
+        downloaded_chat = download_chat_to_file(video_id)
+        if not downloaded_chat:
+            print("❌ Не удалось скачать чат.")
+            return None
+        chat_data = downloaded_chat  # обновим переменную
 
     # 5. Извлекаем категории (смена игр и разделов)
     categories = process_url(video_id)
@@ -107,7 +112,7 @@ def save_stream_data(video_id, stream_data):
 
 # Пример использования
 if __name__ == "__main__":
-    video_id = "2406296141"
+    video_id = "2434728985"
     data = collect_stream_data(video_id)
 
     if data == "exists":
