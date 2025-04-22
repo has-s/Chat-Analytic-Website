@@ -58,4 +58,25 @@ def analyze_chat_activity(chat_data, keywords=None, use_regex=False, match_case=
     }
 
 if __name__ == "__main__":
-    pass
+    stream_id = "2425707027"  # ID нужной трансляции
+    keywords = [""]  # Пример ключевых слов для фильтрации
+
+    # Получение данных чата для трансляции
+    chat_data = get_chat_data(stream_id)  # Предполагается, что get_chat_data возвращает необходимые данные
+
+    # Анализ активности чата
+    result = analyze_chat_activity(chat_data, keywords=keywords)
+
+    # Отображение результатов
+    print("📊 Результаты анализа активности чата:")
+    print("💬 Сообщения по минутам:")
+    for minute, count in result["messages_per_minute"].items():
+        print(f"  Минутa {minute}: {count} сообщений")
+
+    print("\n🔑 Сообщения по ключевым словам:")
+    for minute, count in result["keyword_messages_per_minute"].items():
+        print(f"  Минутa {minute}: {count} сообщений с ключевыми словами")
+
+    print("\n📅 Интервалы категорий:")
+    for start_time, end_time, category in result["category_intervals"]:
+        print(f"  Категория: {category} — с {start_time} мин по {end_time} мин")
