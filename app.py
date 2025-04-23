@@ -3,6 +3,7 @@ from celery.result import AsyncResult
 from celery_config import make_celery
 from tasks import save_stream_task, run_analysis_task
 from data_collectors.helix_api import extract_vod_id, get_streamer_id
+import json
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -35,16 +36,30 @@ def index():
 def run_analysis():
     metrics = request.form.getlist('metrics')
     top_chatters_count = int(request.form.get('top_chatters_count', 10))
-    keywords = request.form.get('keywords', "")
     top_pastes_count = int(request.form.get('top_pastes_count', 10))
     emoticons_count = int(request.form.get('emoticons_count', 10))
-
     vod_id = session.get("vod_id")
+
+    keywords_raw = request.form.get('keywords', '[]')
+    try:
+        keywords = json.loads(keywords_raw)
+        if not isinstance(keywords, list):
+            raise ValueError("Ключевые слова должны быть списком.")
+    except (json.JSONDecodeError, ValueError) as e:
+        return jsonify({"status": "error", "message": f"Ошибка в ключевых словах: {str(e)}"}), 400
 
     if not metrics or not vod_id:
         return jsonify({"status": "error", "message": "Отсутствуют метрики или VOD ID"}), 400
 
-    task = run_analysis_task.delay(vod_id, metrics, top_chatters_count, keywords, top_pastes_count, emoticons_count)
+    task = run_analysis_task.delay(
+        vod_id,
+        metrics,
+        top_chatters_count,
+        keywords,  # <- теперь это список, а не строка
+        top_pastes_count,
+        emoticons_count
+    )
+
     return jsonify({"status": "success", "task_id": task.id})
 
 @app.route('/check_status/<task_id>', methods=['GET'])

@@ -61,6 +61,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const formData = new FormData(analyticsForm);
+
+            // Преобразуем ключевые слова в JSON-массив
+            const keywordsInput = analyticsForm.querySelector('input[name="keywords"]');
+            const rawKeywords = keywordsInput?.value || "";
+            const keywordsArray = rawKeywords
+                .split(",")
+                .map(k => k.trim())
+                .filter(k => k.length > 0);
+            formData.set("keywords", JSON.stringify(keywordsArray));
+
             const response = await fetch("/run_analysis", { method: "POST", body: formData });
             const data = await response.json();
 
@@ -159,11 +169,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // График активности по минутам
         if (res.chat_activity?.messages_per_minute) {
-            // удаляем старый canvas, если есть
             const old = document.getElementById("activityChart");
             if (old) old.remove();
 
-            // создаём новый
             const canvas = document.createElement("canvas");
             canvas.id = "activityChart";
             resultsContainer.innerHTML += "<h3>Активность по минутам</h3>";
@@ -172,13 +180,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const allData = res.chat_activity.messages_per_minute;
             const keywordData = res.chat_activity.keyword_messages_per_minute || {};
 
-            // собираем и сортируем минуты
             const minutes = Array.from(new Set([
                 ...Object.keys(allData),
                 ...Object.keys(keywordData)
-            ]))
-            .map(m => parseInt(m, 10))
-            .sort((a, b) => a - b);
+            ])).map(m => parseInt(m, 10)).sort((a, b) => a - b);
 
             const total = minutes.map(m => allData[m] || 0);
             const byKeyword = minutes.map(m => keywordData[m] || 0);
