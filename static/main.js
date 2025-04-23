@@ -5,10 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultsContainer = document.getElementById("results");
     let intervalId;
 
-    // Скрываем форму аналитики до загрузки VOD
     analyticsForm.style.display = "none";
 
-    // Отправка URL VOD
     vodForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         analyticsForm.style.display = "none";
@@ -32,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Проверка статуса загрузки VOD
     async function checkDataLoadingStatus(taskId) {
         try {
             const response = await fetch(`/check_status/${taskId}`);
@@ -53,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Отправка настроек аналитики
     analyticsForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         resultsContainer.innerHTML = "";
@@ -61,8 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const formData = new FormData(analyticsForm);
-
-            // Преобразуем ключевые слова в JSON-массив
             const keywordsInput = analyticsForm.querySelector('input[name="keywords"]');
             const rawKeywords = keywordsInput?.value || "";
             const keywordsArray = rawKeywords
@@ -85,7 +79,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Поллинг статуса задачи аналитики
     function checkAnalysisStatus(taskId) {
         intervalId = setInterval(async () => {
             try {
@@ -112,12 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 1000);
     }
 
-    // Рендер результатов
     function renderResults(result) {
         resultsContainer.innerHTML = "";
         const res = result.analysis_result || {};
 
-        // Топ чаттеры
         if (res.top_chatters) {
             resultsContainer.innerHTML += "<h3>Топ чаттеры</h3>";
             const ul = document.createElement("ul");
@@ -129,7 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
             resultsContainer.appendChild(ul);
         }
 
-        // Топ пасты
         if (res.top_pastes) {
             resultsContainer.innerHTML += "<h3>Топ пасты</h3>";
             const ul = document.createElement("ul");
@@ -150,7 +140,6 @@ document.addEventListener("DOMContentLoaded", () => {
             resultsContainer.appendChild(ul);
         }
 
-        // Топ смайлики
         if (res.top_emoticons) {
             resultsContainer.innerHTML += "<h3>Топ смайлики</h3>";
             const grid = document.createElement("div");
@@ -167,7 +156,6 @@ document.addEventListener("DOMContentLoaded", () => {
             resultsContainer.appendChild(grid);
         }
 
-        // График активности по минутам
         if (res.chat_activity?.messages_per_minute) {
             const old = document.getElementById("activityChart");
             if (old) old.remove();
@@ -179,6 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const allData = res.chat_activity.messages_per_minute;
             const keywordData = res.chat_activity.keyword_messages_per_minute || {};
+            const categoryIntervals = res.chat_activity.category_intervals || [];
 
             const minutes = Array.from(new Set([
                 ...Object.keys(allData),
@@ -187,6 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const total = minutes.map(m => allData[m] || 0);
             const byKeyword = minutes.map(m => keywordData[m] || 0);
+            const categoryColors = generateCategoryColorMap(categoryIntervals);
 
             new Chart(canvas, {
                 type: "line",
@@ -214,13 +204,72 @@ document.addEventListener("DOMContentLoaded", () => {
                 options: {
                     responsive: true,
                     interaction: { mode: "index", intersect: false },
-                    plugins: { legend: { position: "top" } },
+                    plugins: {
+                        legend: { position: "top" },
+                        categoryMapBackground: {
+                            intervals: categoryIntervals.map(([from, to, label]) => ({ from, to, label })),
+                            colors: categoryColors
+                        }
+                    },
                     scales: {
                         x: { title: { display: true, text: "Минута стрима" } },
                         y: { beginAtZero: true, title: { display: true, text: "Количество сообщений" } }
                     }
-                }
+                },
+                plugins: [categoryMapBackground]
+            });
+
+            // Добавим легенду по категориям
+            const legendDiv = document.createElement("div");
+            legendDiv.innerHTML = "<h4>Категории:</h4>";
+            Object.entries(categoryColors).forEach(([label, color]) => {
+                const item = document.createElement("div");
+                item.style.display = "inline-block";
+                item.style.marginRight = "15px";
+                item.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:${color};margin-right:5px;border-radius:2px;"></span>${label}`;
+                legendDiv.appendChild(item);
+            });
+            resultsContainer.appendChild(legendDiv);
+        }
+    }
+
+    const categoryMapBackground = {
+        id: 'categoryMapBackground',
+        beforeDraw(chart, args, options) {
+            const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+            if (!options || !options.intervals) return;
+
+            options.intervals.forEach(({ from, to, label }) => {
+                const x1 = x.getPixelForValue(from);
+                const x2 = x.getPixelForValue(to);
+                const width = x2 - x1;
+
+                ctx.save();
+                ctx.fillStyle = options.colors?.[label] || 'rgba(200, 200, 200, 0.2)';
+                ctx.fillRect(x1, top, width, bottom - top);
+                ctx.restore();
             });
         }
+    };
+
+    function generateCategoryColorMap(intervals) {
+        const colorMap = {};
+        intervals.forEach(([, , label]) => {
+            if (!colorMap[label]) {
+                colorMap[label] = hashColor(label);
+            }
+        });
+        return colorMap;
+    }
+
+    function hashColor(label) {
+        let hash = 0;
+        for (let i = 0; i < label.length; i++) {
+            hash = label.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const r = (hash >> 0) & 255;
+        const g = (hash >> 8) & 255;
+        const b = (hash >> 16) & 255;
+        return `rgba(${r}, ${g}, ${b}, 0.3)`;  // повышенная яркость (прозрачность 0.3)
     }
 });
