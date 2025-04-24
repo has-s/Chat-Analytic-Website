@@ -165,6 +165,17 @@ document.addEventListener("DOMContentLoaded", () => {
             resultsContainer.innerHTML += "<h3>Активность по минутам</h3>";
             resultsContainer.appendChild(canvas);
 
+            const navDiv = document.createElement("div");
+            navDiv.style.margin = "10px 0";
+            navDiv.innerHTML = `
+                <button id="zoom_in_btn">+</button>
+                <button id="zoom_out_btn">−</button>
+                <button id="pan_left_btn">←</button>
+                <button id="pan_right_btn">→</button>
+                <button id="reset_zoom_btn">Сбросить масштаб</button>
+            `;
+            resultsContainer.appendChild(navDiv);
+
             const allData = res.chat_activity.messages_per_minute;
             const keywordData = res.chat_activity.keyword_messages_per_minute || {};
             const categoryIntervals = res.chat_activity.category_intervals || [];
@@ -178,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const byKeyword = minutes.map(m => keywordData[m] || 0);
             const categoryColors = generateCategoryColorMap(categoryIntervals);
 
-            new Chart(canvas, {
+            const chart = new Chart(canvas, {
                 type: "line",
                 data: {
                     labels: minutes.map(m => `${m} мин`),
@@ -209,17 +220,43 @@ document.addEventListener("DOMContentLoaded", () => {
                         categoryMapBackground: {
                             intervals: categoryIntervals.map(([from, to, label]) => ({ from, to, label })),
                             colors: categoryColors
+                        },
+                        zoom: {
+                            zoom: {
+                                wheel: { enabled: true },
+                                pinch: { enabled: true },
+                                mode: 'x'
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'x',
+                                threshold: 10
+                            },
+                            limits: {
+                                x: { min: 'original', max: 'original' },
+                                y: { min: 0 }
+                            }
                         }
                     },
                     scales: {
-                        x: { title: { display: true, text: "Минута стрима" } },
-                        y: { beginAtZero: true, title: { display: true, text: "Количество сообщений" } }
+                        x: {
+                            title: { display: true, text: "Минута стрима" }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: "Количество сообщений" }
+                        }
                     }
                 },
                 plugins: [categoryMapBackground]
             });
 
-            // Добавим легенду по категориям
+            document.getElementById("zoom_in_btn").onclick = () => chart.zoom(1.2);
+            document.getElementById("zoom_out_btn").onclick = () => chart.zoom(0.8);
+            document.getElementById("pan_left_btn").onclick = () => chart.pan({ x: -50 });
+            document.getElementById("pan_right_btn").onclick = () => chart.pan({ x: 50 });
+            document.getElementById("reset_zoom_btn").onclick = () => chart.resetZoom();
+
             const legendDiv = document.createElement("div");
             legendDiv.innerHTML = "<h4>Категории:</h4>";
             Object.entries(categoryColors).forEach(([label, color]) => {
@@ -245,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const width = x2 - x1;
 
                 ctx.save();
-                ctx.fillStyle = options.colors?.[label] || 'rgba(200, 200, 200, 0.2)';
+                ctx.fillStyle = options.colors?.[label] || 'rgba(200, 200, 200, 0.3)';
                 ctx.fillRect(x1, top, width, bottom - top);
                 ctx.restore();
             });
@@ -270,6 +307,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const r = (hash >> 0) & 255;
         const g = (hash >> 8) & 255;
         const b = (hash >> 16) & 255;
-        return `rgba(${r}, ${g}, ${b}, 0.3)`;  // повышенная яркость (прозрачность 0.3)
+        return `rgba(${r}, ${g}, ${b}, 0.3)`;
     }
 });
