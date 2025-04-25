@@ -253,8 +253,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             document.getElementById("zoom_in_btn").onclick = () => chart.zoom(1.2);
             document.getElementById("zoom_out_btn").onclick = () => chart.zoom(0.8);
-            document.getElementById("pan_left_btn").onclick = () => chart.pan({ x: -50 });
-            document.getElementById("pan_right_btn").onclick = () => chart.pan({ x: 50 });
+            document.getElementById("pan_left_btn").onclick = () => chart.pan({ x: 50 });
+            document.getElementById("pan_right_btn").onclick = () => chart.pan({ x: -50 });
             document.getElementById("reset_zoom_btn").onclick = () => chart.resetZoom();
 
             const legendDiv = document.createElement("div");

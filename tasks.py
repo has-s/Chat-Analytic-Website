@@ -18,21 +18,18 @@ STORAGE_PATHS = [os.path.join(PROJECT_ROOT, 'stream_data'), os.path.join(PROJECT
 @app.task(bind=True)
 def save_stream_task(self, vod_id):
     try:
-        # Генерация уникального идентификатора для файла
-        file_id = str(uuid.uuid4())  # UUID для уникальности
-
         # Собираем данные о трансляции
         stream_data = collect_stream_data(vod_id)
 
         if not stream_data:
             return {'status': 'error', 'message': 'Не удалось собрать данные для трансляции'}
 
-        # Сохраняем данные в файл
-        file_path = save_stream_data(vod_id, stream_data, file_id)  # Передаем 3 аргумента
+        # Сохраняем данные в файл, используя vod_id в качестве имени
+        file_path = save_stream_data(vod_id, stream_data)
 
         if file_path:
-            # Возвращаем идентификатор файла вместо пути
-            return {'status': 'success', 'file_id': file_id}
+            # Возвращаем путь к файлу (или его имя)
+            return {'status': 'success', 'file_path': file_path}
         else:
             return {'status': 'error', 'message': 'Ошибка при сохранении файла.'}
 

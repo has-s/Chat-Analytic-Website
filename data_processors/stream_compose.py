@@ -1,6 +1,5 @@
 import json
 import os
-import uuid
 from dotenv import load_dotenv
 from data_collectors.helix_api import get_times_stream_info, get_streamer_id
 from data_collectors.emote import load_emotes
@@ -15,15 +14,15 @@ OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'stream_data')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-def check_existing_data(file_id):
-    """Проверяет, существует ли уже файл с таким ID (если нужно)."""
-    file_path = os.path.join(OUTPUT_DIR, f"{file_id}.json")
+def check_existing_data(vod_id):
+    """Проверяет, существует ли файл для этого vod_id."""
+    file_path = os.path.join(OUTPUT_DIR, f"{vod_id}.json")
     return os.path.exists(file_path)
 
 
 def get_chat_data(vod_id):
     """Получает чат-данные для известного vod_id из файла."""
-    chat_file_path = os.path.join(PROJECT_ROOT, f"stream_data/{vod_id}.json")
+    chat_file_path = os.path.join(OUTPUT_DIR, f"{vod_id}.json")
 
     try:
         # Проверяем, существует ли файл
@@ -46,19 +45,21 @@ def get_chat_data(vod_id):
         return None
 
 
-def collect_stream_data(video_id):
+def collect_stream_data(vod_id):
     """Собирает данные о трансляции, если они ещё не сохранены."""
 
     # Если данные уже есть, просто сообщаем и выходим
-    file_id = str(uuid.uuid4())  # Генерируем уникальный идентификатор для файла
+    if check_existing_data(vod_id):
+        print(f"⚠️ Данные для {vod_id} уже существуют. Пропускаем сбор.")
+        return "exists"  # Если файл существует, возвращаем 'exists'
 
     # 1. Получаем информацию о VOD
-    vod_info = get_times_stream_info(video_id)
+    vod_info = get_times_stream_info(vod_id)
     if not vod_info:
         return None  # Не удалось получить данные о VOD
 
     # 2. Извлекаем ID стримера
-    user_id = get_streamer_id(video_id)
+    user_id = get_streamer_id(vod_id)
     if not user_id:
         return None  # Не удалось получить ID стримера
 
@@ -66,21 +67,21 @@ def collect_stream_data(video_id):
     emotes = load_emotes(user_id)
 
     # 4. Получаем чат данных через новую функцию
-    chat_data = get_chat_data(video_id)
+    chat_data = get_chat_data(vod_id)
     if not chat_data:
         print("💬 Чат не найден. Пробуем скачать...")
-        downloaded_chat = download_chat_to_file(video_id)
+        downloaded_chat = download_chat_to_file(vod_id)
         if not downloaded_chat:
             print("❌ Не удалось скачать чат.")
             return None
         chat_data = downloaded_chat  # обновим переменную
 
     # 5. Извлекаем категории (смена игр и разделов)
-    categories = process_url(video_id)
+    categories = process_url(vod_id)
 
     # 6. Формируем итоговые данные
     stream_data = {
-        "video_id": video_id,
+        "video_id": vod_id,
         "user_id": user_id,
         "vod_info": vod_info,
         "emotes": emotes,
@@ -88,20 +89,25 @@ def collect_stream_data(video_id):
         "categories": categories  # Добавленные категории
     }
 
-    return file_id, stream_data  # Возвращаем уникальный идентификатор файла и данные
+    return stream_data  # Возвращаем данные о стриме
 
 
-def save_stream_data(vod_id, stream_data, file_id):
-    """Сохраняет данные о трансляции в JSON-файл с уникальным идентификатором."""
-    output_path = os.path.join(OUTPUT_DIR, f"{file_id}.json")  # Используем file_id вместо video_id
+def save_stream_data(vod_id, stream_data):
+    """Сохраняет данные о трансляции в JSON-файл с именем, соответствующим vod_id."""
 
-    if check_existing_data(file_id):
-        print(f"⚠️ Файл {output_path} уже существует. Сохранение отменено.")
-        return output_path
+    # Путь к файлу будет использовать vod_id как имя файла
+    output_path = os.path.join(OUTPUT_DIR, f"{vod_id}.json")
+
+    # Проверяем, существует ли файл для данного vod_id
+    if check_existing_data(vod_id):
+        print(f"⚠️ Данные для {vod_id} уже существуют. Пропускаем сохранение.")
+        return output_path  # Если файл существует, возвращаем путь к существующему файлу
 
     try:
+        # Сохраняем данные в JSON-файл
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(stream_data, f, ensure_ascii=False, indent=4)
+
         print(f"💾 Данные сохранены в {output_path}")
         return output_path
     except IOError as e:
@@ -115,10 +121,9 @@ if __name__ == "__main__":
     result = collect_stream_data(video_id)
 
     if result == "exists":
-        print("✅ Данные уже существуют. Завершаем работу.")
+        print("✅ Данные для данного VOD уже существуют. Завершаем работу.")
     elif result:
-        file_id, data = result  # Получаем уникальный ID файла и данные
-        save_stream_data(file_id, data)
+        save_stream_data(video_id, result)  # Сохраняем данные
         print("🎉 Сбор данных завершён.")
     else:
         print("❌ Сбор данных не удался.")
