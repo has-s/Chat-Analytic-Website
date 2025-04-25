@@ -4,9 +4,16 @@ from celery_config import make_celery
 from tasks import save_stream_task, run_analysis_task
 from data_collectors.helix_api import extract_vod_id, get_streamer_id
 import json
+import os
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения из файла .env
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+
+# Используем переменную окружения для секретного ключа
+app.secret_key = os.getenv("FLASK_KEY", "default_secret_key")  # Если переменная не найдена, используем дефолтное значение
 
 # Конфигурация Celery
 app.config.from_object('config.Config')
