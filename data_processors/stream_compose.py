@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 from dotenv import load_dotenv
 from data_collectors.helix_api import get_times_stream_info, get_streamer_id
 from data_collectors.emote import load_emotes
@@ -14,10 +15,10 @@ OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'stream_data')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-def check_existing_data(video_id):
-    """Проверяет, существует ли уже файл с данными трансляции."""
-    output_path = os.path.join(OUTPUT_DIR, f"{video_id}.json")
-    return os.path.exists(output_path)
+def check_existing_data(file_id):
+    """Проверяет, существует ли уже файл с таким ID (если нужно)."""
+    file_path = os.path.join(OUTPUT_DIR, f"{file_id}.json")
+    return os.path.exists(file_path)
 
 
 def get_chat_data(vod_id):
@@ -49,9 +50,7 @@ def collect_stream_data(video_id):
     """Собирает данные о трансляции, если они ещё не сохранены."""
 
     # Если данные уже есть, просто сообщаем и выходим
-    if check_existing_data(video_id):
-        print(f"⚠️ Данные для {video_id} уже существуют. Пропускаем сбор.")
-        return "exists"
+    file_id = str(uuid.uuid4())  # Генерируем уникальный идентификатор для файла
 
     # 1. Получаем информацию о VOD
     vod_info = get_times_stream_info(video_id)
@@ -89,14 +88,14 @@ def collect_stream_data(video_id):
         "categories": categories  # Добавленные категории
     }
 
-    return stream_data
+    return file_id, stream_data  # Возвращаем уникальный идентификатор файла и данные
 
 
-def save_stream_data(video_id, stream_data):
-    """Сохраняет данные о трансляции в JSON-файл, если они ещё не сохранены."""
-    output_path = os.path.join(OUTPUT_DIR, f"{video_id}.json")
+def save_stream_data(vod_id, stream_data, file_id):
+    """Сохраняет данные о трансляции в JSON-файл с уникальным идентификатором."""
+    output_path = os.path.join(OUTPUT_DIR, f"{file_id}.json")  # Используем file_id вместо video_id
 
-    if check_existing_data(video_id):
+    if check_existing_data(file_id):
         print(f"⚠️ Файл {output_path} уже существует. Сохранение отменено.")
         return output_path
 
@@ -113,12 +112,13 @@ def save_stream_data(video_id, stream_data):
 # Пример использования
 if __name__ == "__main__":
     video_id = "2434728985"
-    data = collect_stream_data(video_id)
+    result = collect_stream_data(video_id)
 
-    if data == "exists":
+    if result == "exists":
         print("✅ Данные уже существуют. Завершаем работу.")
-    elif data:
-        save_stream_data(video_id, data)
+    elif result:
+        file_id, data = result  # Получаем уникальный ID файла и данные
+        save_stream_data(file_id, data)
         print("🎉 Сбор данных завершён.")
     else:
         print("❌ Сбор данных не удался.")

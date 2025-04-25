@@ -1,5 +1,5 @@
 from celery import Celery
-import os
+import os, uuid
 from dotenv import load_dotenv
 from data_processors.stream_compose import collect_stream_data, save_stream_data
 from data_processors.analytic_composer import analyze_stream_data
@@ -13,18 +13,29 @@ load_dotenv()
 PROJECT_ROOT = os.getenv('PROJECT_ROOT')  # Для теста можно использовать /tmp
 STORAGE_PATHS = [os.path.join(PROJECT_ROOT, 'stream_data'), os.path.join(PROJECT_ROOT, 'chats')]
 
+
 # Задача для сохранения данных о стриме
 @app.task(bind=True)
 def save_stream_task(self, vod_id):
     try:
+        # Генерация уникального идентификатора для файла
+        file_id = str(uuid.uuid4())  # UUID для уникальности
+
         # Собираем данные о трансляции
         stream_data = collect_stream_data(vod_id)
+
+        if not stream_data:
+            return {'status': 'error', 'message': 'Не удалось собрать данные для трансляции'}
+
         # Сохраняем данные в файл
-        file_path = save_stream_data(vod_id, stream_data)
+        file_path = save_stream_data(vod_id, stream_data, file_id)  # Передаем 3 аргумента
+
         if file_path:
-            return {'status': 'success', 'file_path': file_path}
+            # Возвращаем идентификатор файла вместо пути
+            return {'status': 'success', 'file_id': file_id}
         else:
             return {'status': 'error', 'message': 'Ошибка при сохранении файла.'}
+
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
 
@@ -66,7 +77,6 @@ def run_analysis_task(self, vod_id, metrics, top_chatters_count=10, keywords="",
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-# Задача для очистки старых файлов
 @app.task(bind=True)
 def cleanup_task(self, paths=None, max_age_days=60, max_folder_size_mb=10000, max_size_mb=100):
     try:

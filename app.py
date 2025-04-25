@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, send_from_directory, abort
 from celery.result import AsyncResult
 from celery_config import make_celery
 from tasks import save_stream_task, run_analysis_task
@@ -14,6 +14,7 @@ app = Flask(__name__)
 
 # Используем переменную окружения для секретного ключа
 app.secret_key = os.getenv("FLASK_KEY", "default_secret_key")  # Если переменная не найдена, используем дефолтное значение
+PROJECT_ROOT = os.getenv("PROJECT_ROOT")
 
 # Конфигурация Celery
 app.config.from_object('config.Config')
@@ -80,6 +81,20 @@ def check_status(task_id):
         return jsonify({"status": "failure", "result": str(task.result)})
     else:
         return jsonify({"status": "unknown"})
+
+
+@app.route('/get_file/<file_id>', methods=['GET'])
+def get_file(file_id):
+    # Директория, где хранятся файлы
+    storage_dir = os.path.join(PROJECT_ROOT, 'stream_data')
+
+    # Формируем путь к файлу на основе идентификатора
+    file_path = os.path.join(storage_dir, f'{file_id}.json')  # Например, .json как расширение
+
+    if not os.path.exists(file_path):
+        abort(404, description="File not found")
+
+    return send_from_directory(storage_dir, f'{file_id}.json', as_attachment=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
