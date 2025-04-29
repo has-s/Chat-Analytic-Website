@@ -1,5 +1,5 @@
 from celery import Celery
-import os, uuid
+import os
 from dotenv import load_dotenv
 from data_processors.stream_compose import collect_stream_data, save_stream_data
 from data_processors.analytic_composer import analyze_stream_data

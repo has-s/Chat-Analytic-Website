@@ -1,4 +1,3 @@
-import json
 from data_analytic.filter import filter_messages_by_keywords
 from data_processors.stream_compose import get_chat_data
 
