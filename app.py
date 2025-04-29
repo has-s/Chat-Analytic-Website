@@ -7,8 +7,12 @@ import json
 import os
 from dotenv import load_dotenv
 
-# Загружаем переменные окружения из файла .env
-load_dotenv()
+# Загружаем переменные окружения из файла .env.local
+# Загрузим .env.local.local для локальной разработки
+if os.environ.get('FLASK_ENV') == 'development':
+    load_dotenv('.env.local')
+else:
+    load_dotenv('.env.docker')
 
 app = Flask(__name__)
 

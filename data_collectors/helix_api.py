@@ -9,7 +9,12 @@ from data_collectors.helix_validator import get_helix_token
 logger = setup_logger("helix_api")
 
 # Загрузка переменных окружения
-load_dotenv()
+# Загрузим .env.local.local для локальной разработки
+if os.environ.get('FLASK_ENV') == 'development':
+    load_dotenv('.env.local')
+else:
+    load_dotenv('.env.docker')
+
 CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
 CLIENT_SECRET = os.getenv("TWITCH_CLIENT_SECRET")
 BASE_URL = 'https://api.twitch.tv/helix'

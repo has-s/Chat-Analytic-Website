@@ -8,8 +8,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from pathlib import Path
-import time
 from data_collectors.helix_api import get_stream_duration  # Функция для получения длительности видео
 
 # Настройка логирования
@@ -20,7 +18,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("category_parser")
 
-load_dotenv()
+# Загрузим .env.local.local для локальной разработки
+if os.environ.get('FLASK_ENV') == 'development':
+    load_dotenv('.env.local')
+else:
+    load_dotenv('.env.docker')
 
 CHROMEDRIVER_PATH = os.getenv('CHROMEDRIVER_PATH')
 

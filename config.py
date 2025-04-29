@@ -5,7 +5,7 @@ def get_project_root():
     current_path = os.path.abspath(__file__)
 
     # Поднимаемся по каталогам до тех пор, пока не найдем корень проекта
-    while not os.path.exists(os.path.join(current_path, 'setup.py')) and not os.path.exists(os.path.join(current_path, '.env')):
+    while not os.path.exists(os.path.join(current_path, 'setup.py')) and not os.path.exists(os.path.join(current_path, '.env.local')):
         current_path = os.path.dirname(current_path)
 
     return current_path

@@ -6,7 +6,12 @@ from data_collectors.emote import load_emotes
 from data_collectors.chat_download import download_chat_to_file
 from data_collectors.category_parser import process_url  # Добавлен парсер категорий
 
-load_dotenv()
+# Загрузим .env.local.local для локальной разработки
+if os.environ.get('FLASK_ENV') == 'development':
+    load_dotenv('.env.local')
+else:
+    load_dotenv('.env.docker')
+
 PROJECT_ROOT = os.getenv('PROJECT_ROOT')
 
 # Директория для сохранения данных

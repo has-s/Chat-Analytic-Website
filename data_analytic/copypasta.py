@@ -11,7 +11,11 @@ PASTA_MIN_LENGTH = 10  # Минимальная длина пасты
 SIMILARITY_THRESHOLD = 0.8  # Порог схожести для группировки
 
 # Загрузка переменных среды
-load_dotenv()
+# Загрузим .env.local.local для локальной разработки
+if os.environ.get('FLASK_ENV') == 'development':
+    load_dotenv('.env.local')
+else:
+    load_dotenv('.env.docker')
 
 # Получаем корневой путь проекта из переменной окружения
 PROJECT_ROOT = os.getenv("PROJECT_ROOT")

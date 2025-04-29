@@ -9,7 +9,12 @@ from data_processors.data_storage import delete_old_streams  # Импортир�
 app = Celery('tasks', broker='pyamqp://guest@localhost//')
 
 # Загружаем конфигурацию (если нужно)
-load_dotenv()
+# Загрузим .env.local.local для локальной разработки
+if os.environ.get('FLASK_ENV') == 'development':
+    load_dotenv('.env.local.local')
+else:
+    load_dotenv('.env.docker')
+
 PROJECT_ROOT = os.getenv('PROJECT_ROOT')  # Для теста можно использовать /tmp
 STORAGE_PATHS = [os.path.join(PROJECT_ROOT, 'stream_data'), os.path.join(PROJECT_ROOT, 'chats')]
 

@@ -8,7 +8,11 @@ from logging_config import setup_logger
 logger = setup_logger("chat_downloader")
 
 # Загрузка переменных среды
-load_dotenv()
+# Загрузим .env.local.local для локальной разработки
+if os.environ.get('FLASK_ENV') == 'development':
+    load_dotenv('.env.local')
+else:
+    load_dotenv('.env.docker')
 
 PROJECT_ROOT = os.getenv('PROJECT_ROOT')
 CHAT_CLIENT_ID = os.getenv("CHAT_CLIENT_ID")
