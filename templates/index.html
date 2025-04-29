@@ -42,6 +42,7 @@
         <label for="vod_url">Введите URL трансляции:</label>
         <input type="text" id="vod_url" name="vod_url" value="{{ vod_url }}" required autocomplete="on">
         <button type="submit">Отправить</button>
+        <p>Активных задач: <span id="active_tasks_counter">?</span> / 2</p>
     </form>
 
     <form id="analytics_form" method="POST" style="display: none;">

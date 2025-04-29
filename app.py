@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, send_from_directory, abort
 from celery.result import AsyncResult
 from celery_config import make_celery
-from tasks import save_stream_task, run_analysis_task
+from tasks import save_stream_task, run_analysis_task, get_active_tasks_count
 from data_collectors.helix_api import extract_vod_id, get_streamer_id
 import json
 import os
@@ -95,6 +95,14 @@ def get_file(file_id):
         abort(404, description="File not found")
 
     return send_from_directory(storage_dir, f'{file_id}.json', as_attachment=True)
+
+@app.route('/worker_status', methods=['GET'])
+def worker_status():
+    try:
+        active_count = get_active_tasks_count()
+        return jsonify({"active_tasks": active_count})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

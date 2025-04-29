@@ -84,3 +84,8 @@ def cleanup_task(self, paths=None, max_age_days=60, max_folder_size_mb=10000, ma
 
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+def get_active_tasks_count():
+    i = app.control.inspect()
+    active = i.active() or {}
+    return sum(len(tasks) for tasks in active.values())

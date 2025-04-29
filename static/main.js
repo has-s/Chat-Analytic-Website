@@ -3,9 +3,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusMessage = document.getElementById("status_message");
     const analyticsForm = document.getElementById("analytics_form");
     const resultsContainer = document.getElementById("results");
+    const workerStatusCounter = document.getElementById("active_tasks_counter"); // Добавим для отображения количества активных задач
     let intervalId;
 
     analyticsForm.style.display = "none";
+
+    // Обновление информации о количестве активных задач
+    async function updateWorkerStatus() {
+        try {
+            const response = await fetch("/worker_status");
+            const data = await response.json();
+            workerStatusCounter.textContent = data.active_tasks ?? "–"; // Обновляем счетчик
+        } catch (e) {
+            console.error("Ошибка при получении статуса воркеров:", e);
+        }
+    }
+
+    // Обновить сразу
+    updateWorkerStatus();
+    // Повторять обновление каждые 10 секунд
+    setInterval(updateWorkerStatus, 1000);
 
     vodForm.addEventListener("submit", async (event) => {
         event.preventDefault();
