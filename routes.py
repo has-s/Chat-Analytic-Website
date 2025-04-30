@@ -1,5 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, session, send_from_directory, abort
 from celery.result import AsyncResult
+from config import Config
+
+from app import limiter
 from tasks import save_stream_task, run_analysis_task, get_active_tasks_count
 from data_collectors.helix_api import extract_vod_id, get_streamer_id
 import os
@@ -78,10 +81,18 @@ def get_file(file_id):
         abort(404, description="File not found")
     return send_from_directory(storage_dir, f'{file_id}.json', as_attachment=True)
 
+
 @main.route('/worker_status', methods=['GET'])
+@limiter.limit("12 per minute")  # Ограничение на количество запросов
 def worker_status():
     try:
         active_count = get_active_tasks_count()
-        return jsonify({"active_tasks": active_count})
+        max_workers = Config.MAX_WORKERS
+
+        return jsonify({
+            "active_tasks": active_count,
+            "max_workers": max_workers
+        })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -4,25 +4,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const analyticsForm = document.getElementById("analytics_form");
     const resultsContainer = document.getElementById("results");
     const workerStatusCounter = document.getElementById("active_tasks_counter"); // Добавим для отображения количества активных задач
+    const maxWorkersCounter = document.getElementById("max_workers_counter");
     let intervalId;
 
     analyticsForm.style.display = "none";
 
-    // Обновление информации о количестве активных задач
-    async function updateWorkerStatus() {
-        try {
-            const response = await fetch("/worker_status");
-            const data = await response.json();
-            workerStatusCounter.textContent = data.active_tasks ?? "–"; // Обновляем счетчик
-        } catch (e) {
-            console.error("Ошибка при получении статуса воркеров:", e);
-        }
-    }
+// Обновление информации о количестве активных задач
+async function updateWorkerStatus() {
+    try {
+        const response = await fetch("/worker_status");
+        const data = await response.json();
 
-    // Обновить сразу
-    updateWorkerStatus();
-    // Повторять обновление каждые 10 секунд
-    setInterval(updateWorkerStatus, 1000);
+        workerStatusCounter.textContent = data.active_tasks ?? "–"; // Обновляем счетчик активных задач
+        maxWorkersCounter.textContent = data.max_workers ?? "–"; // Обновляем счетчик максимальных воркеров
+
+    } catch (e) {
+        console.error("Ошибка при получении статуса воркеров:", e);
+    }
+}
+
+// Обновить сразу
+updateWorkerStatus();
+// Повторять обновление каждые 5 секунд
+setInterval(updateWorkerStatus, 5000);
 
     vodForm.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -72,6 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
         resultsContainer.innerHTML = "";
         statusMessage.textContent = "Запуск аналитики...";
 
+        const submitButton = analyticsForm.querySelector("button[type='submit']");
+        submitButton.disabled = true; // Отключаем кнопку, чтобы предотвратить повторное нажатие
+
         try {
             const formData = new FormData(analyticsForm);
             const keywordsInput = analyticsForm.querySelector('input[name="keywords"]');
@@ -86,17 +93,19 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
 
             if (data.status === "success") {
-                checkAnalysisStatus(data.task_id);
+                checkAnalysisStatus(data.task_id, submitButton); // передаем кнопку
             } else {
                 statusMessage.textContent = "Ошибка запуска аналитики.";
+                submitButton.disabled = false; // Восстанавливаем кнопку
             }
         } catch (err) {
             statusMessage.textContent = "Ошибка при отправке формы аналитики.";
+            submitButton.disabled = false; // Восстанавливаем кнопку при ошибке
             console.error(err);
         }
     });
 
-    function checkAnalysisStatus(taskId) {
+    function checkAnalysisStatus(taskId, submitButton) {
         intervalId = setInterval(async () => {
             try {
                 const response = await fetch(`/check_status/${taskId}`);
@@ -108,15 +117,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     statusMessage.textContent = "Аналитика завершена.";
                     renderResults(data.result);
                     clearInterval(intervalId);
+                    submitButton.disabled = false; // Включаем кнопку после выполнения
                 } else {
                     statusMessage.textContent = data.status === "failure"
                         ? "Ошибка выполнения аналитики: " + data.result
                         : "Неизвестный статус задачи.";
                     clearInterval(intervalId);
+                    submitButton.disabled = false; // Включаем кнопку при ошибке
                 }
             } catch (err) {
                 statusMessage.textContent = "Ошибка проверки статуса.";
                 clearInterval(intervalId);
+                submitButton.disabled = false; // Включаем кнопку при ошибке
                 console.error(err);
             }
         }, 1000);
