@@ -1,23 +1,25 @@
+from dotenv import load_dotenv
 import os
 
-def get_project_root():
-    # Получаем текущую директорию (где находится этот скрипт)
-    current_path = os.path.abspath(__file__)
 
-    # Поднимаемся по каталогам до тех пор, пока не найдем корень проекта
-    while not os.path.exists(os.path.join(current_path, 'setup.py')) and not os.path.exists(os.path.join(current_path, '.env.local')):
-        current_path = os.path.dirname(current_path)
+def load_environment():
+    """Загружает переменные окружения из файла .env локально или в Docker."""
+    env_file = '.env.local' if os.environ.get('FLASK_ENV') == 'development' else '.env.docker'
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    env_path = os.path.join(base_dir, '..', env_file)  # ищем файл на уровень выше (в корне проекта)
 
-    return current_path
+    load_dotenv(dotenv_path=env_path)
 
-# Глобальная переменная для корня проекта
-PROJECT_ROOT = get_project_root()
+# Вызываем загрузку переменных окружения при запуске
+load_environment()
+
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
-        # Параметры для Celery
-    CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Пример URL брокера
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Пример URL для хранилища результатов
+    """Конфигурация для Flask и Celery."""
+
+    SECRET_KEY = os.getenv("SECRET_KEY")  # Взять секретный ключ из переменных окружения
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')  # Брокер сообщений Celery
+    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')  # Бэкенд для хранения результатов
     CELERY_ACCEPT_CONTENT = ['json']  # Типы контента, которые Celery будет обрабатывать
     CELERY_TASK_SERIALIZER = 'json'  # Формат сериализации задач
     CELERY_RESULT_SERIALIZER = 'json'  # Формат сериализации результатов

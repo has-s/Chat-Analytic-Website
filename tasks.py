@@ -11,7 +11,7 @@ app = Celery('tasks', broker='pyamqp://guest@localhost//')
 # Загружаем конфигурацию (если нужно)
 # Загрузим .env.local.local для локальной разработки
 if os.environ.get('FLASK_ENV') == 'development':
-    load_dotenv('.env.local.local')
+    load_dotenv('.env.local')
 else:
     load_dotenv('.env.docker')
 

@@ -12,7 +12,7 @@ def create_app():
     celery.conf.update(app.config)
 
     # Импортируем и регистрируем Blueprint с маршрутами
-    from .routes import main
+    from routes import main
     app.register_blueprint(main)
 
     return app
