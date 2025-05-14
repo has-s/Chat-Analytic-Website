@@ -143,7 +143,15 @@ setInterval(updateWorkerStatus, 5000);
             const ul = document.createElement("ul");
             res.top_chatters.forEach(([name, count]) => {
                 const li = document.createElement("li");
-                li.textContent = `${name}: ${count} сообщений`;
+
+                // Обрезка длинных ников
+                const shortenedName = name.length > 15 ? name.substring(0, 15) + "..." : name;
+
+                // Сокращение "сообщений"
+                const messageCount = count + " сообщ.";
+
+                // Создание ссылки с ником
+                li.innerHTML = `<a href="https://twitch.tv/${name}" target="_blank">${shortenedName}</a>: ${messageCount}`;
                 ul.appendChild(li);
             });
             resultsContainer.appendChild(ul);
@@ -152,20 +160,24 @@ setInterval(updateWorkerStatus, 5000);
         if (res.top_pastes) {
             resultsContainer.innerHTML += "<h3>Топ пасты</h3>";
             const ul = document.createElement("ul");
+
             res.top_pastes.forEach(paste => {
                 const li = document.createElement("li");
-                li.innerHTML = `<strong>${paste.base_pasta}</strong> (${paste.count})`;
+                li.innerHTML = `<strong>(${paste.count})</strong> ${paste.base_pasta}`;
+
                 if (paste.variants?.length) {
                     const sub = document.createElement("ul");
                     paste.variants.forEach(v => {
                         const sli = document.createElement("li");
-                        sli.textContent = `${v.text} (${v.count})`;
+                        sli.textContent = `(${v.count}) ${v.text}`;
                         sub.appendChild(sli);
                     });
                     li.appendChild(sub);
                 }
+
                 ul.appendChild(li);
             });
+
             resultsContainer.appendChild(ul);
         }
 
@@ -173,15 +185,17 @@ setInterval(updateWorkerStatus, 5000);
             resultsContainer.innerHTML += "<h3>Топ смайлики</h3>";
             const grid = document.createElement("div");
             grid.className = "emote-grid";
+
             res.top_emoticons.forEach(emote => {
                 const wr = document.createElement("div");
                 wr.className = "emote";
                 wr.innerHTML = `
-                    <img src="${emote.url}" alt="${emote.name}" title="${emote.name}" width="32" height="32">
-                    <div>${emote.name}: ${emote.count}</div>
+                    <img src="${emote.url}" alt="${emote.name}" title="${emote.name}" width="48" height="48">
+                    <div>${emote.count}</div>
                 `;
                 grid.appendChild(wr);
             });
+
             resultsContainer.appendChild(grid);
         }
 
@@ -299,24 +313,72 @@ setInterval(updateWorkerStatus, 5000);
         }
     }
 
-    const categoryMapBackground = {
-        id: 'categoryMapBackground',
-        beforeDraw(chart, args, options) {
-            const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
-            if (!options || !options.intervals) return;
+const categoryMapBackground = {
+    id: 'categoryMapBackground',
+    beforeDraw(chart, args, options) {
+        const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+        if (!options || !options.intervals) return;
 
-            options.intervals.forEach(({ from, to, label }) => {
-                const x1 = x.getPixelForValue(from);
-                const x2 = x.getPixelForValue(to);
-                const width = x2 - x1;
+        options.intervals.forEach(({ from, to, label }) => {
+            const x1 = x.getPixelForValue(from);
+            const x2 = x.getPixelForValue(to);
+            const width = x2 - x1;
 
-                ctx.save();
-                ctx.fillStyle = options.colors?.[label] || 'rgba(200, 200, 200, 0.3)';
-                ctx.fillRect(x1, top, width, bottom - top);
-                ctx.restore();
-            });
-        }
-    };
+            ctx.save();
+
+            // создаём паттерн
+            const patternCanvas = createStripePattern(options.colors?.[label] || '#ccc');
+            const pattern = ctx.createPattern(patternCanvas, 'repeat');
+
+            ctx.fillStyle = pattern;
+            ctx.fillRect(x1, top, width, bottom - top);
+
+            ctx.restore();
+        });
+    }
+};
+
+    function createStripePattern(color = '#000', background = '#fff') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 8;
+    canvas.height = 8;
+    const ctx = canvas.getContext('2d');
+
+    // Фон
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, 8, 8);
+
+    // Диагональные полосы
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 8);
+    ctx.lineTo(8, 0);
+    ctx.stroke();
+
+    return canvas;
+}
+
+function createLinePattern(color = '#3498db', bg = 'transparent') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 8;
+    canvas.height = 8;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, 8, 8);
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 8);
+    ctx.lineTo(8, 0);
+    ctx.stroke();
+
+    return canvas;
+}
+
+
 
     function generateCategoryColorMap(intervals) {
         const colorMap = {};
@@ -336,6 +398,6 @@ setInterval(updateWorkerStatus, 5000);
         const r = (hash >> 0) & 255;
         const g = (hash >> 8) & 255;
         const b = (hash >> 16) & 255;
-        return `rgba(${r}, ${g}, ${b}, 0.3)`;
+        return `rgba(${r}, ${g}, ${b}, 0.5)`;
     }
 });

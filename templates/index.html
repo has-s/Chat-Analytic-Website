@@ -4,56 +4,153 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Форма для загрузки данных</title>
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>Форма для загрузки данных</h1>
-    <form method="POST" id="vodForm">
-        <label for="vod_url">Введите URL трансляции:</label>
-        <input type="text" id="vod_url" name="vod_url" value="{{ vod_url }}" required autocomplete="on">
-        <button type="submit">Отправить</button>
-    </form>
 
-    <div>
-        <p> Количество рабочих: <span id="active_tasks_counter">?</span> / <span id="max_workers_counter">?</span> </p>
-    </div>
+    <!-- Header -->
+    <header>
+        <h1>Аналитика трансляций</h1>
+        <p>Сервис для анализа Twitch VOD трансляций, предоставляющий информацию о категориях,
+            эмодзи, графиках активности сообщений и ключевых словах, а также активных чаттеров,
+            паст за одну трансляцию. Поддерживает BTTV, 7TV и FFZ.</p>
+    </header>
 
-    <form id="analytics_form" method="POST" style="display: none;">
+    <!-- Navigation -->
+    <nav>
+        <ul>
+            <li><a href="#service">Сервис</a></li>
+            <li><a href="#feedback">Обратная связь</a></li>
+            <li><a href="#about">О проекте</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+    </nav>
+
+    <!-- Форма загрузки URL трансляции -->
+    <section id="vod-form">
+        <h2>Загрузить данные</h2>
+        <form method="POST" id="vodForm">
+            <label for="vod_url">Введите URL трансляции:</label>
+            <input type="text" id="vod_url" name="vod_url" value="{{ vod_url }}" required autocomplete="on" placeholder="twitch.tv/video/1234567890">
+            <small>Введите URL или ID существующей трансляции. Данные аналитики будут храниться до 60 дней после последнего запроса.</small>
+
+            <button type="submit">Отправить</button>
+        </form>
+
+        <div>
+            <p>Рабочие задачи: <span id="active_tasks_counter">?</span> / <span id="max_workers_counter">?</span></p>
+            <p id="task_tooltip" class="tooltip">?</p>
+            <small>Количество задач, обрабатываемых одновременно. Если лимит достигнут, задача ставится в очередь.</small>
+        </div>
+    </section>
+
+    <!-- Настройки аналитики -->
+    <section id="analytics-settings">
         <h2>Настройки аналитики</h2>
 
+        <form id="analytics_form" method="POST" style="display: none;">
+            <!-- Метрика: Топ чаттеры -->
+            <div>
+                <input type="checkbox" name="metrics" value="top_chatters" checked>
+                <label>Топ чаттеры</label>
+                <input type="number" name="top_chatters_count" min="1" value="10" required>
+                <small>Пользователи, оставившие наибольшее количество сообщений за трансляцию.</small>
+            </div>
+
+            <!-- Метрика: Поиск по ключевым словам -->
+            <div>
+                <input type="checkbox" name="metrics" value="chat_activity" checked>
+                <label>Поиск по ключевым словам</label>
+                <input type="text" name="keywords">
+                <small>
+                    Отображает график активности чата по минутам, с учётом категорий.
+                    При вводе ключевых слов через запятую, на графике дополнительно выделяются пики их упоминаний.
+                </small>
+            </div>
+
+            <!-- Метрика: Топ пасты -->
+            <div>
+                <input type="checkbox" name="metrics" value="top_pastes" checked>
+                <label>Поиск паст</label>
+                <input type="number" name="top_pastes_count" min="1" value="10" required>
+                <small>
+                    Определяет наиболее часто повторяющиеся сообщения (пасты), содержащие не менее 15 символов и пробел.
+                    Пасты считаются схожими при совпадении не менее чем на 80%.
+                    Для каждой такой группы выделяется ядро и отображаются подпасты — вариации исходного текста.
+                </small>
+            </div>
+
+            <!-- Метрика: Топ эмоутов -->
+            <div>
+                <input type="checkbox" name="metrics" value="top_emoticons" checked>
+                <label>Топ эмоутов</label>
+                <input type="number" name="emoticons_count" min="1" value="10" required>
+                <small>Показывает самые часто используемые эмоуты. Поддерживаются BTTV, FFZ и 7TV</small>
+            </div>
+
+            <button type="submit">Запустить аналитику</button>
+        </form>
+    </section>
+
+    <!-- Статус задачи и результаты -->
+    <section id="status-results">
+        <p id="status_message"></p>
+        <div id="results" style="margin-top: 20px;"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
         <div>
-            <input type="checkbox" name="metrics" value="top_chatters" checked>
-            <label>Топ чаттеры</label>
-            <input type="number" name="top_chatters_count" min="1" value="10" required>
+            <img id="footer-img" src="{{ url_for('static', filename='images/torres1.png') }}" alt="ah, torres...">
         </div>
+        <p>© 2025 Имя. Все права защищены.</p>
+    </footer>
 
-        <div>
-            <input type="checkbox" name="metrics" value="chat_activity" checked>
-            <label>Поиск по ключевым словам</label>
-            <input type="text" name="keywords">
-        </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const footerImage = document.getElementById("footer-img");
 
-        <div>
-            <input type="checkbox" name="metrics" value="top_pastes" checked>
-            <label>Поиск паст</label>
-            <input type="number" name="top_pastes_count" min="1" value="10" required>
-        </div>
+        // Массив с путями к аудиофайлам (используя Jinja-шаблон)
+        const tracks = [
+          "{{ url_for('static', filename='audio/track1.mp3') }}",
+          "{{ url_for('static', filename='audio/track2.mp3') }}",
+          "{{ url_for('static', filename='audio/track3.mp3') }}",
+          "{{ url_for('static', filename='audio/track4.mp3') }}"
+        ];
 
-        <div>
-            <input type="checkbox" name="metrics" value="top_emoticons" checked>
-            <label>Топ смайликов</label>
-            <input type="number" name="emoticons_count" min="1" value="10" required>
-        </div>
+        // Массив с путями к изображениям
+        const images = {
+          image1: "{{ url_for('static', filename='images/torres1.png') }}",
+          image2: "{{ url_for('static', filename='images/torres2.png') }}"
+        };
 
-        <button type="submit">Запустить аналитику</button>
-    </form>
+        // Создаём объект Audio
+        const audio = new Audio();
 
-    <p id="status_message"></p>
-    <div id="results" style="margin-top: 20px;"></div>
+        // Функция для случайного выбора трека
+        function playRandomTrack() {
+          const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+          audio.src = randomTrack;
+          audio.play();
+        }
 
+        // Событие на наведение
+        footerImage.addEventListener("mouseenter", () => {
+          footerImage.src = images.image2;
+          playRandomTrack(); // Воспроизводим случайный трек
+        });
+
+        // Событие на уход мыши
+        footerImage.addEventListener("mouseleave", () => {
+          footerImage.src = images.image1;
+        });
+      });
+    </script>
+
+    <!-- Ссылки на скрипты -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
+
 </body>
 </html>
