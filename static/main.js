@@ -238,20 +238,28 @@ setInterval(updateWorkerStatus, 5000);
                     labels: minutes.map(m => `${m} мин`),
                     datasets: [
                         {
-                            label: "По ключевым словам",
+                            label: "Ключевые слова",
                             data: byKeyword,
                             fill: true,
-                            tension: 0.5,
+                            tension: 0,
                             borderColor: "#e74c3c",
-                            backgroundColor: "rgba(231, 76, 60, 0.2)"
+                            borderWidth: 2,
+                            backgroundColor: "rgba(231, 76, 60, 0.2)",
+                            pointStyle: "rect",
+                            pointRadius: 4,
+                            pointBorderWidth: 1
                         },
                         {
                             label: "Все сообщения",
                             data: total,
                             fill: true,
-                            tension: 0.5,
+                            tension: 0,
                             borderColor: "#3498db",
-                            backgroundColor: "rgba(52, 152, 219, 0.1)"
+                            borderWidth: 2,
+                            backgroundColor: "rgba(52, 152, 219, 0.1)",
+                            pointStyle: "rect",
+                            pointRadius: 4,
+                            pointBorderWidth: 1
                         }
                     ]
                 },
@@ -265,19 +273,34 @@ setInterval(updateWorkerStatus, 5000);
                             colors: categoryColors
                         },
                         zoom: {
-                            zoom: {
-                                wheel: { enabled: true },
-                                pinch: { enabled: true },
-                                mode: 'x'
-                            },
                             pan: {
                                 enabled: true,
                                 mode: 'x',
-                                threshold: 10
+                                threshold: 10,
+                                onPanComplete({ chart }) {
+                                    const x = chart.scales.x;
+                                    if (x.min < 0) chart.resetZoom();
+                                },
+                                limits: {
+                                    x: {
+                                        min: 0,
+                                        max: minutes.length - 1
+                                    }
+                                }
                             },
-                            limits: {
-                                x: { min: 'original', max: 'original' },
-                                y: { min: 0 }
+                            zoom: {
+                                wheel: { enabled: true },
+                                pinch: { enabled: true },
+                                mode: 'x',
+                                limits: {
+                                    x: {
+                                        min: 0,
+                                        max: minutes.length - 1
+                                    },
+                                    y: {
+                                        min: 0
+                                    }
+                                }
                             }
                         }
                     },
@@ -313,26 +336,26 @@ setInterval(updateWorkerStatus, 5000);
         }
     }
 
+// Плагин фона с учётом границ видимой области
 const categoryMapBackground = {
     id: 'categoryMapBackground',
     beforeDraw(chart, args, options) {
-        const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+        const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
         if (!options || !options.intervals) return;
 
         options.intervals.forEach(({ from, to, label }) => {
-            const x1 = x.getPixelForValue(from);
-            const x2 = x.getPixelForValue(to);
+            const x1 = Math.max(x.getPixelForValue(from), left);
+            const x2 = Math.min(x.getPixelForValue(to), right);
             const width = x2 - x1;
 
-            ctx.save();
+            if (width <= 0) return;
 
-            // создаём паттерн
+            ctx.save();
             const patternCanvas = createStripePattern(options.colors?.[label] || '#ccc');
             const pattern = ctx.createPattern(patternCanvas, 'repeat');
 
             ctx.fillStyle = pattern;
             ctx.fillRect(x1, top, width, bottom - top);
-
             ctx.restore();
         });
     }
