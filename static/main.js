@@ -204,140 +204,155 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (res.chat_activity?.messages_per_minute) {
-            const old = document.getElementById("activityChart");
-            if (old) old.remove();
+    const old = document.getElementById("activityChart");
+    if (old) old.remove();
 
-            const canvas = document.createElement("canvas");
-            canvas.id = "activityChart";
-            resultsContainer.innerHTML += "<h3>Активность по минутам</h3>";
-            resultsContainer.appendChild(canvas);
+    // Создаем основной контейнер с нужными классами
+    const block = document.createElement("div");
+    block.className = "metric-block metric-chat_activity";
 
-            const navDiv = document.createElement("div");
-            navDiv.style.margin = "10px 0";
-            navDiv.innerHTML = `
-                <button id="zoom_in_btn">+</button>
-                <button id="zoom_out_btn">−</button>
-                <button id="pan_left_btn">←</button>
-                <button id="pan_right_btn">→</button>
-                <button id="reset_zoom_btn">Сбросить масштаб</button>
-            `;
-            resultsContainer.appendChild(navDiv);
+    // Заголовок
+    const title = document.createElement("h3");
+    title.textContent = "Активность по минутам";
+    block.appendChild(title);
 
-            const allData = res.chat_activity.messages_per_minute;
-            const keywordData = res.chat_activity.keyword_messages_per_minute || {};
-            const categoryIntervals = res.chat_activity.category_intervals || [];
+    // Canvas для графика
+    const canvas = document.createElement("canvas");
+    canvas.id = "activityChart";
+    block.appendChild(canvas);
 
-            const minutes = Array.from(new Set([
-                ...Object.keys(allData),
-                ...Object.keys(keywordData)
-            ])).map(m => parseInt(m, 10)).sort((a, b) => a - b);
+    // Навигация
+    const navDiv = document.createElement("div");
+    navDiv.className = "chart-navigation";
+    navDiv.innerHTML = `
+        <button id="zoom_in_btn">+</button>
+        <button id="zoom_out_btn">−</button>
+        <button id="pan_left_btn">←</button>
+        <button id="pan_right_btn">→</button>
+        <button id="reset_zoom_btn">Сбросить масштаб</button>
+    `;
+    block.appendChild(navDiv);
 
-            const total = minutes.map(m => allData[m] || 0);
-            const byKeyword = minutes.map(m => keywordData[m] || 0);
-            const categoryColors = generateCategoryColorMap(categoryIntervals);
+    resultsContainer.appendChild(block);
 
-            const chart = new Chart(canvas, {
-                type: "line",
-                data: {
-                    labels: minutes.map(m => `${m} мин`),
-                    datasets: [
-                        {
-                            label: "Ключевые слова",
-                            data: byKeyword,
-                            fill: true,
-                            tension: 0,
-                            borderColor: "#e74c3c",
-                            borderWidth: 2,
-                            backgroundColor: "rgba(231, 76, 60, 0.2)",
-                            pointStyle: "rect",
-                            pointRadius: 4,
-                            pointBorderWidth: 1
-                        },
-                        {
-                            label: "Все сообщения",
-                            data: total,
-                            fill: true,
-                            tension: 0,
-                            borderColor: "#3498db",
-                            borderWidth: 2,
-                            backgroundColor: "rgba(52, 152, 219, 0.1)",
-                            pointStyle: "rect",
-                            pointRadius: 4,
-                            pointBorderWidth: 1
-                        }
-                    ]
+    // Данные и создание графика (ваш код без изменений)
+    const allData = res.chat_activity.messages_per_minute;
+    const keywordData = res.chat_activity.keyword_messages_per_minute || {};
+    const categoryIntervals = res.chat_activity.category_intervals || [];
+
+    const minutes = Array.from(new Set([
+        ...Object.keys(allData),
+        ...Object.keys(keywordData)
+    ])).map(m => parseInt(m, 10)).sort((a, b) => a - b);
+
+    const total = minutes.map(m => allData[m] || 0);
+    const byKeyword = minutes.map(m => keywordData[m] || 0);
+    const categoryColors = generateCategoryColorMap(categoryIntervals);
+
+    const chart = new Chart(canvas, {
+        type: "line",
+        data: {
+            labels: minutes.map(m => `${m} мин`),
+            datasets: [
+                {
+                    label: "Ключевые слова",
+                    data: byKeyword,
+                    fill: true,
+                    tension: 0,
+                    borderColor: "#e74c3c",
+                    borderWidth: 2,
+                    backgroundColor: "rgba(231, 76, 60, 0.2)",
+                    pointStyle: "rect",
+                    pointRadius: 4,
+                    pointBorderWidth: 1
                 },
-                options: {
-                    responsive: true,
-                    interaction: { mode: "index", intersect: false },
-                    plugins: {
-                        legend: { position: "top" },
-                        categoryMapBackground: {
-                            intervals: categoryIntervals.map(([from, to, label]) => ({ from, to, label })),
-                            colors: categoryColors
+                {
+                    label: "Все сообщения",
+                    data: total,
+                    fill: true,
+                    tension: 0,
+                    borderColor: "#3498db",
+                    borderWidth: 2,
+                    backgroundColor: "rgba(52, 152, 219, 0.1)",
+                    pointStyle: "rect",
+                    pointRadius: 4,
+                    pointBorderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: { position: "top" },
+                categoryMapBackground: {
+                    intervals: categoryIntervals.map(([from, to, label]) => ({ from, to, label })),
+                    colors: categoryColors
+                },
+                zoom: {
+                    pan: {
+                        enabled: true,
+                        mode: 'x',
+                        threshold: 10,
+                        onPanComplete({ chart }) {
+                            const x = chart.scales.x;
+                            if (x.min < 0) chart.resetZoom();
                         },
-                        zoom: {
-                            pan: {
-                                enabled: true,
-                                mode: 'x',
-                                threshold: 10,
-                                onPanComplete({ chart }) {
-                                    const x = chart.scales.x;
-                                    if (x.min < 0) chart.resetZoom();
-                                },
-                                limits: {
-                                    x: {
-                                        min: 0,
-                                        max: minutes.length - 1
-                                    }
-                                }
-                            },
-                            zoom: {
-                                wheel: { enabled: true },
-                                pinch: { enabled: true },
-                                mode: 'x',
-                                limits: {
-                                    x: {
-                                        min: 0,
-                                        max: minutes.length - 1
-                                    },
-                                    y: {
-                                        min: 0
-                                    }
-                                }
+                        limits: {
+                            x: {
+                                min: 0,
+                                max: minutes.length - 1
                             }
                         }
                     },
-                    scales: {
-                        x: {
-                            title: { display: true, text: "Минута стрима" }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: "Количество сообщений" }
+                    zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                        mode: 'x',
+                        limits: {
+                            x: {
+                                min: 0,
+                                max: minutes.length - 1
+                            },
+                            y: {
+                                min: 0
+                            }
                         }
                     }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: "Минута стрима" }
                 },
-                plugins: [categoryMapBackground]
-            });
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: "Количество сообщений" }
+                }
+            }
+        },
+        plugins: [categoryMapBackground]
+    });
 
-            document.getElementById("zoom_in_btn").onclick = () => chart.zoom(1.2);
-            document.getElementById("zoom_out_btn").onclick = () => chart.zoom(0.8);
-            document.getElementById("pan_left_btn").onclick = () => chart.pan({ x: 50 });
-            document.getElementById("pan_right_btn").onclick = () => chart.pan({ x: -50 });
-            document.getElementById("reset_zoom_btn").onclick = () => chart.resetZoom();
+    document.getElementById("zoom_in_btn").onclick = () => chart.zoom(1.2);
+    document.getElementById("zoom_out_btn").onclick = () => chart.zoom(0.8);
+    document.getElementById("pan_left_btn").onclick = () => chart.pan({ x: 50 });
+    document.getElementById("pan_right_btn").onclick = () => chart.pan({ x: -50 });
+    document.getElementById("reset_zoom_btn").onclick = () => chart.resetZoom();
 
-            const legendDiv = document.createElement("div");
-            legendDiv.innerHTML = "<h4>Категории:</h4>";
-            Object.entries(categoryColors).forEach(([label, color]) => {
-                const item = document.createElement("div");
-                item.style.display = "inline-block";
-                item.style.marginRight = "15px";
-                item.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:${color};margin-right:5px;border-radius:2px;"></span>${label}`;
-                legendDiv.appendChild(item);
-            });
-            resultsContainer.appendChild(legendDiv);
-        }
+    // Легенда категорий
+    const legendDiv = document.createElement("div");
+    legendDiv.className = "category-legend";
+    legendDiv.innerHTML = "<h4>Категории:</h4>";
+    Object.entries(categoryColors).forEach(([label, color]) => {
+        const item = document.createElement("div");
+        item.className = "category-legend-item";
+        item.innerHTML = `<span style="background:${color};"></span>${label}`;
+        legendDiv.appendChild(item);
+    });
+    block.appendChild(legendDiv);
+}
+
     }
 
     // Плагин фона с учётом границ видимой области
