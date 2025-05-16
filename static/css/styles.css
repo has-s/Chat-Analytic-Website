@@ -1,3 +1,70 @@
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(12, auto); /* больше строк, чтобы футер был "глубже" */
+    gap: 8px;
+    padding: 16px;
+    min-height: 100vh; /* растягиваем до высоты окна */
+}
+
+.grid-header,
+.grid-nav,
+.grid-form,
+.grid-settings,
+.grid-results,
+.grid-footer {
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+        /* Заголовок */
+        .grid-header {
+            grid-area: 2 / 2 / 4 / 3;
+        }
+
+        /* Навигация */
+        .grid-nav {
+            grid-area: 4 / 2 / 9 / 3;
+        }
+
+        /* Форма */
+        .grid-form {
+            grid-area: 2 / 3 / 4 / 5;
+        }
+
+        /* Настройки */
+        .grid-settings {
+            grid-area: 2 / 5 / 4 / 7;
+        }
+
+        /* Результаты аналитики */
+        .grid-results {
+            grid-area: 4 / 3 / 9 / 7;
+        }
+
+        /* Пустое пространство (опционально) */
+        .grid-spacer {
+            grid-area: 9 / 3 / 11 / 7;
+        }
+
+        /* Футер — только внизу, прокручивается */
+        .grid-footer {
+            margin-top: 600px;
+            grid-area: 11 / 2 / 13 / 7; /* ниже spacer и results */
+        }
+
+            .footer-image img {
+                width: 120px; /* или нужная ширина */
+                height: auto; /* или фиксированная высота: height: 80px; */
+                display: block;
+            }
+
+
+
+
+
 .hidden {
     display: none;
 }
@@ -6,3 +73,4 @@
     width: 50px;
     height: 50px;
 }
+

@@ -9,8 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     analyticsForm.style.display = "none";
 
-// Обновление информации о количестве активных задач
-async function updateWorkerStatus() {
+    // Обновление информации о количестве активных задач
+    async function updateWorkerStatus() {
     try {
         const response = await fetch("/worker_status");
         const data = await response.json();
@@ -23,10 +23,10 @@ async function updateWorkerStatus() {
     }
 }
 
-// Обновить сразу
-updateWorkerStatus();
-// Повторять обновление каждые 5 секунд
-setInterval(updateWorkerStatus, 5000);
+    // Обновить сразу
+    updateWorkerStatus();
+    // Повторять обновление каждые 5 секунд
+    setInterval(updateWorkerStatus, 5000);
 
     vodForm.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -336,8 +336,8 @@ setInterval(updateWorkerStatus, 5000);
         }
     }
 
-// Плагин фона с учётом границ видимой области
-const categoryMapBackground = {
+    // Плагин фона с учётом границ видимой области
+    const categoryMapBackground = {
     id: 'categoryMapBackground',
     beforeDraw(chart, args, options) {
         const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
@@ -382,27 +382,6 @@ const categoryMapBackground = {
     return canvas;
 }
 
-function createLinePattern(color = '#3498db', bg = 'transparent') {
-    const canvas = document.createElement('canvas');
-    canvas.width = 8;
-    canvas.height = 8;
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, 8, 8);
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, 8);
-    ctx.lineTo(8, 0);
-    ctx.stroke();
-
-    return canvas;
-}
-
-
-
     function generateCategoryColorMap(intervals) {
         const colorMap = {};
         intervals.forEach(([, , label]) => {
@@ -414,13 +393,14 @@ function createLinePattern(color = '#3498db', bg = 'transparent') {
     }
 
     function hashColor(label) {
-        let hash = 0;
-        for (let i = 0; i < label.length; i++) {
-            hash = label.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const r = (hash >> 0) & 255;
-        const g = (hash >> 8) & 255;
-        const b = (hash >> 16) & 255;
-        return `rgba(${r}, ${g}, ${b}, 0.5)`;
+    let hash = 0;
+    for (let i = 0; i < label.length; i++) {
+        hash = label.charCodeAt(i) + ((hash << 5) - hash);
+        hash = hash & hash; // 32-битное целое
     }
+    const r = (hash & 0xFF);
+    const g = (hash >> 8) & 0xFF;
+    const b = (hash >> 16) & 0xFF;
+    return `rgba(${r}, ${g}, ${b}, 0.5)`;
+}
 });
