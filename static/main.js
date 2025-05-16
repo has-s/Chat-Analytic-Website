@@ -135,71 +135,75 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderResults(result) {
-        resultsContainer.innerHTML = "";
-        const res = result.analysis_result || {};
+    resultsContainer.innerHTML = "";
+    const res = result.analysis_result || {};
 
-        if (res.top_chatters) {
-            resultsContainer.innerHTML += "<h3>Топ чаттеры</h3>";
-            const ul = document.createElement("ul");
-            res.top_chatters.forEach(([name, count]) => {
-                const li = document.createElement("li");
+    if (res.top_chatters) {
+        const block = document.createElement("div");
+        block.className = "metric-block metric-top_chatters";
+        block.innerHTML = "<h3>Топ чаттеры</h3>";
 
-                // Обрезка длинных ников
-                const shortenedName = name.length > 15 ? name.substring(0, 15) + "..." : name;
+        const ul = document.createElement("ul");
+        res.top_chatters.forEach(([name, count]) => {
+            const li = document.createElement("li");
+            const shortenedName = name.length > 15 ? name.substring(0, 15) + "..." : name;
+            const messageCount = count + " сообщ.";
+            li.innerHTML = `<a href="https://twitch.tv/${name}" target="_blank">${shortenedName}</a>: ${messageCount}`;
+            ul.appendChild(li);
+        });
 
-                // Сокращение "сообщений"
-                const messageCount = count + " сообщ.";
+        block.appendChild(ul);
+        resultsContainer.appendChild(block);
+    }
 
-                // Создание ссылки с ником
-                li.innerHTML = `<a href="https://twitch.tv/${name}" target="_blank">${shortenedName}</a>: ${messageCount}`;
-                ul.appendChild(li);
-            });
-            resultsContainer.appendChild(ul);
-        }
+    if (res.top_pastes) {
+        const block = document.createElement("div");
+        block.className = "metric-block metric-top_pastes";
+        block.innerHTML = "<h3>Топ пасты</h3>";
 
-        if (res.top_pastes) {
-            resultsContainer.innerHTML += "<h3>Топ пасты</h3>";
-            const ul = document.createElement("ul");
+        const ul = document.createElement("ul");
+        res.top_pastes.forEach(paste => {
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>(${paste.count})</strong> ${paste.base_pasta}`;
+            if (paste.variants?.length) {
+                const sub = document.createElement("ul");
+                paste.variants.forEach(v => {
+                    const sli = document.createElement("li");
+                    sli.textContent = `(${v.count}) ${v.text}`;
+                    sub.appendChild(sli);
+                });
+                li.appendChild(sub);
+            }
+            ul.appendChild(li);
+        });
 
-            res.top_pastes.forEach(paste => {
-                const li = document.createElement("li");
-                li.innerHTML = `<strong>(${paste.count})</strong> ${paste.base_pasta}`;
+        block.appendChild(ul);
+        resultsContainer.appendChild(block);
+    }
 
-                if (paste.variants?.length) {
-                    const sub = document.createElement("ul");
-                    paste.variants.forEach(v => {
-                        const sli = document.createElement("li");
-                        sli.textContent = `(${v.count}) ${v.text}`;
-                        sub.appendChild(sli);
-                    });
-                    li.appendChild(sub);
-                }
+    if (res.top_emoticons) {
+        const block = document.createElement("div");
+        block.className = "metric-block metric-top_emoticons";
+        block.innerHTML = "<h3>Топ смайлики</h3>";
 
-                ul.appendChild(li);
-            });
+        const grid = document.createElement("div");
+        grid.className = "emote-grid";
 
-            resultsContainer.appendChild(ul);
-        }
+        res.top_emoticons.forEach(emote => {
+            const wr = document.createElement("div");
+            wr.className = "emote-item";
+            wr.innerHTML = `
+                <img src="${emote.url}" alt="${emote.name}" title="${emote.name}" width="48" height="48">
+                <div>${emote.count}</div>
+            `;
+            grid.appendChild(wr);
+        });
 
-        if (res.top_emoticons) {
-            resultsContainer.innerHTML += "<h3>Топ смайлики</h3>";
-            const grid = document.createElement("div");
-            grid.className = "emote-grid";
+        block.appendChild(grid);
+        resultsContainer.appendChild(block);
+    }
 
-            res.top_emoticons.forEach(emote => {
-                const wr = document.createElement("div");
-                wr.className = "emote";
-                wr.innerHTML = `
-                    <img src="${emote.url}" alt="${emote.name}" title="${emote.name}" width="48" height="48">
-                    <div>${emote.count}</div>
-                `;
-                grid.appendChild(wr);
-            });
-
-            resultsContainer.appendChild(grid);
-        }
-
-        if (res.chat_activity?.messages_per_minute) {
+    if (res.chat_activity?.messages_per_minute) {
             const old = document.getElementById("activityChart");
             if (old) old.remove();
 
