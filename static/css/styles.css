@@ -1,10 +1,10 @@
 .grid-container {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(12, auto); /* больше строк, чтобы футер был "глубже" */
+    grid-template-rows: repeat(12, auto);
     gap: 8px;
     padding: 16px;
-    min-height: 100vh; /* растягиваем до высоты окна */
+    min-height: 100vh;
 }
 
 .grid-header,
@@ -19,51 +19,37 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-        /* Заголовок */
-        .grid-header {
-            grid-area: 2 / 2 / 4 / 3;
-        }
+/* Размещения */
+.grid-header    { grid-area: 2 / 2 / 4 / 3; }
+.grid-nav       { grid-area: 4 / 2 / 9 / 3; }
+.grid-form      { grid-area: 2 / 3 / 4 / 5; }
+.grid-settings  { grid-area: 2 / 5 / 4 / 7; }
+.grid-results   { grid-area: 4 / 3 / 9 / 7; }
+.grid-spacer    { grid-area: 9 / 3 / 11 / 7; }
+.grid-footer    {
+    margin-top: 600px;
+    grid-area: 11 / 2 / 13 / 7;
+}
 
-        /* Навигация */
-        .grid-nav {
-            grid-area: 4 / 2 / 9 / 3;
-        }
+.footer-image img {
+    width: 120px;
+    height: auto;
+    display: block;
+}
 
-        /* Форма */
-        .grid-form {
-            grid-area: 2 / 3 / 4 / 5;
-        }
+/* ################################################ */
+/* Общий контейнер метрики (все, кроме графика) */
+.metric-block:not(.metric-activity_chart) {
+    background-color: #f9f9f9;
+    padding: 20px;
+    margin: 0 auto 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    font-family: Arial, sans-serif;
+}
 
-        /* Настройки */
-        .grid-settings {
-            grid-area: 2 / 5 / 4 / 7;
-        }
-
-        /* Результаты аналитики */
-        .grid-results {
-            grid-area: 4 / 3 / 9 / 7;
-        }
-
-        /* Пустое пространство (опционально) */
-        .grid-spacer {
-            grid-area: 9 / 3 / 11 / 7;
-        }
-
-        /* Футер — только внизу, прокручивается */
-        .grid-footer {
-            margin-top: 600px;
-            grid-area: 11 / 2 / 13 / 7; /* ниже spacer и results */
-        }
-
-            .footer-image img {
-                width: 120px; /* или нужная ширина */
-                height: auto; /* или фиксированная высота: height: 80px; */
-                display: block;
-            }
-
-
-/* Общий контейнер метрики */
-.metric-block {
+/* Для графика активности — полная ширина */
+.metric-block.metric-activity_chart {
     background-color: #f9f9f9;
     padding: 20px;
     margin-bottom: 24px;
@@ -93,7 +79,7 @@
 }
 .metric-top_chatters a {
     color: #2c3e50;
-    text-decoration: none;
+    text-decoration: underline; /* подчёркивание ссылок */
 }
 .metric-top_chatters a:hover {
     text-decoration: underline;
@@ -156,6 +142,14 @@
     background-color: #d0d7db;
 }
 
+.category-legend-item span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 5px;
+}
+
 #legend {
     margin-top: 12px;
 }
@@ -182,7 +176,6 @@
     }
 }
 
-
 .hidden {
     display: none;
 }
@@ -191,4 +184,3 @@
     width: 50px;
     height: 50px;
 }
-
