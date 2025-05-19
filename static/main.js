@@ -184,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (res.top_emoticons) {
         const block = document.createElement("div");
         block.className = "metric-block metric-top_emoticons";
-        block.innerHTML = "<h3>Топ смайлики</h3>";
+        block.innerHTML = "<h3>Топ эмоуты</h3>";
 
         const grid = document.createElement("div");
         grid.className = "emote-grid";

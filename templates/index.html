@@ -1,10 +1,20 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Форма для загрузки данных</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <style>
+        .hint-text {
+            font-size: 12px;
+            color: #777;
+            margin-top: 4px;
+            display: block;
+            line-height: 1.4;
+            font-family: var(--font-main, Arial, sans-serif);
+        }
+    </style>
 </head>
 <body>
     <div class="grid-container">
@@ -20,11 +30,13 @@
         <!-- Навигация -->
         <nav class="grid-nav">
             <ul>
+                <li><a href="https://example.com/donate" target="_blank" rel="noopener noreferrer">
+                            Поддержать проект
+                        </a>
                 <li><a href="#service">Сервис</a></li>
                 <li><a href="#feedback">Обратная связь</a></li>
                 <li><a href="#about">О проекте</a></li>
                 <li><a href="#faq">FAQ</a></li>
-                <li><a href="#xdd">xdd</a></li>
             </ul>
         </nav>
 
@@ -33,14 +45,15 @@
             <h2>Загрузить данные</h2>
             <form method="POST" id="vodForm">
                 <label for="vod_url">Введите URL трансляции:</label>
-                <input type="text" id="vod_url" name="vod_url" value="{{ vod_url }}" required autocomplete="on" placeholder="twitch.tv/video/1234567890">
-                <small>Введите URL или ID существующей трансляции. Данные аналитики будут храниться до 60 дней после последнего запроса.</small>
-                <button type="submit">Отправить</button>
+                <input type="text" id="vod_url" name="vod_url" value="{{ vod_url }}" required autocomplete="on" placeholder="twitch.tv/video/1234567890" />
+                <span class="hint-text">Введите URL или ID существующей публичной трансляции. Данные аналитики будут храниться до 60 дней после последнего запроса.</span>
+                <span class="hint-text">Если данные отсутствуют на сервере, они будут автоматически загружены и сохранены. Скорость загрузки составляет 4700 сообщений в минуту, однако она может изменяться.</span>
+                <span class="hint-text">Например, 6-часовой стрим с 2000 зрителей может содержать около 30 000 сообщений.</span>
+                <p><button type="submit">Отправить</button></p>
             </form>
             <div>
-                <p>Рабочие задачи: <span id="active_tasks_counter">?</span> / <span id="max_workers_counter">?</span></p>
-                <p id="task_tooltip" class="tooltip">?</p>
-                <small>Количество задач, обрабатываемых одновременно. Если лимит достигнут, задача ставится в очередь.</small>
+                <p>Нагрузка: <span id="active_tasks_counter">?</span> / <span id="max_workers_counter">?</span></p>
+                <span class="hint-text">Количество задач, обрабатываемых одновременно. Если лимит достигнут, задача ставится в очередь.</span>
             </div>
         </section>
 
@@ -48,31 +61,43 @@
         <section id="analytics-settings" class="grid-settings">
             <h2>Настройки аналитики</h2>
             <form id="analytics_form" method="POST" style="display: none;">
-                <div>
-                    <input type="checkbox" name="metrics" value="top_chatters" checked>
-                    <label>Топ чаттеры</label>
-                    <input type="number" name="top_chatters_count" min="1" value="10" required>
-                    <small>Пользователи, оставившие наибольшее количество сообщений за трансляцию.</small>
+                <div class="setting-row">
+                    <label>
+                        <input type="checkbox" name="metrics" value="top_chatters" checked />
+                        <span class="setting-label">Топ чаттеры</span>
+                    </label>
+                    <input class="setting-input" type="number" name="top_chatters_count" min="1" value="10" required />
                 </div>
-                <div>
-                    <input type="checkbox" name="metrics" value="chat_activity" checked>
-                    <label>Поиск по ключевым словам</label>
-                    <input type="text" name="keywords">
-                    <small>Отображает график активности чата по минутам, с учётом категорий. При вводе ключевых слов через запятую, на графике дополнительно выделяются пики их упоминаний.</small>
+                <div class="hint-text">Пользователи, оставившие наибольшее количество сообщений за трансляцию.</div>
+
+                <div class="setting-row">
+                    <label>
+                        <input type="checkbox" name="metrics" value="chat_activity" checked />
+                        <span class="setting-label">График активности</span>
+                    </label>
+                    <input class="setting-input" type="text" name="keywords" placeholder="слово1, слово2" />
                 </div>
-                <div>
-                    <input type="checkbox" name="metrics" value="top_pastes" checked>
-                    <label>Поиск паст</label>
-                    <input type="number" name="top_pastes_count" min="1" value="10" required>
-                    <small>Определяет наиболее часто повторяющиеся сообщения (пасты), содержащие не менее 15 символов и пробел. Пасты считаются схожими при совпадении не менее чем на 80%.</small>
+                <div class="hint-text">График активности чата по минутам. При вводе ключевых слов они будут отображены как пики на графике.</div>
+
+                <div class="setting-row">
+                    <label>
+                        <input type="checkbox" name="metrics" value="top_pastes" checked />
+                        <span class="setting-label">Поиск паст</span>
+                    </label>
+                    <input class="setting-input" type="number" name="top_pastes_count" min="1" value="10" required />
                 </div>
-                <div>
-                    <input type="checkbox" name="metrics" value="top_emoticons" checked>
-                    <label>Топ эмоутов</label>
-                    <input type="number" name="emoticons_count" min="1" value="10" required>
-                    <small>Показывает самые часто используемые эмоуты. Поддерживаются BTTV, FFZ и 7TV</small>
+                <div class="hint-text">Поиск часто повторяющихся сообщений длиной не менее 15 символов. Совпадения учитываются от 80% и выше.</div>
+
+                <div class="setting-row">
+                    <label>
+                        <input type="checkbox" name="metrics" value="top_emoticons" checked />
+                        <span class="setting-label">Топ эмоуты</span>
+                    </label>
+                    <input class="setting-input" type="number" name="emoticons_count" min="1" value="10" required />
                 </div>
-                <button type="submit">Запустить аналитику</button>
+                <div class="hint-text">Наиболее часто используемые эмоуты. Поддержка BTTV, FFZ, 7TV.</div>
+
+                <p><button type="submit">Запустить аналитику</button></p>
             </form>
         </section>
 
@@ -85,13 +110,25 @@
         <!-- Пустое пространство -->
         <div class="grid-spacer"></div>
 
-        <!-- Footer -->
         <footer class="grid-footer">
-            <div class="footer-image">
-                <img id="footer-img" src="{{ url_for('static', filename='images/torres1.png') }}"
-                     alt="ah, torres...">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <div class="footer-image">
+                        <img id="footer-img" src="{{ url_for('static', filename='images/torres1.png') }}" alt="ah, torres..." />
+                    </div>
+
+                </div>
+                <div class="footer-right">
+                    <p>
+                        Проект создан в образовательных целях и доступен на безвозмездной основе.<br>
+                        Не аффилирован с Twitch и не предназначен для коммерческого использования.<br>
+                        <a href="https://example.com/donate" target="_blank" rel="noopener noreferrer">
+                            Поддержать проект
+                        </a> — пожертвования приветствуются, но не обязательны.
+                    </p>
+                    <p class="footer-copyright">© 2025 Имя. Все права защищены.</p>
+                </div>
             </div>
-            <p>© 2025 Имя. Все права защищены.</p>
         </footer>
     </div>
 
