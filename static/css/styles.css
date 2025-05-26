@@ -264,8 +264,8 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    border-color: #a3a3a3;
+    box-shadow: 0 0 0 3px rgba(142, 142, 142, 0.2);
     outline: none;
 }
 
@@ -403,4 +403,11 @@ label {
 .grid-nav a:focus,
 .grid-nav a.active {
   text-decoration: underline;
+}
+
+.grid-header p {
+    text-align: justify;
+    hyphens: auto; /* Для корректного переноса слов */
+    line-height: 1.6; /* Лучше читаемость */
+    max-width: 60ch; /* Ограничение ширины для комфорта */
 }

@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusMessage = document.getElementById("status_message");
     const analyticsForm = document.getElementById("analytics_form");
     const resultsContainer = document.getElementById("results");
-    const workerStatusCounter = document.getElementById("active_tasks_counter"); // Добавим для отображения количества активных задач
+    const workerStatusCounter = document.getElementById("active_tasks_counter");
     const maxWorkersCounter = document.getElementById("max_workers_counter");
     let intervalId;
 
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         statusMessage.textContent = "Запуск аналитики...";
 
         const submitButton = analyticsForm.querySelector("button[type='submit']");
-        submitButton.disabled = true; // Отключаем кнопку, чтобы предотвратить повторное нажатие
+        submitButton.disabled = true;
 
         try {
             const formData = new FormData(analyticsForm);
@@ -93,14 +93,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
 
             if (data.status === "success") {
-                checkAnalysisStatus(data.task_id, submitButton); // передаем кнопку
+                checkAnalysisStatus(data.task_id, submitButton);
             } else {
                 statusMessage.textContent = "Ошибка запуска аналитики.";
-                submitButton.disabled = false; // Восстанавливаем кнопку
+                submitButton.disabled = false;
             }
         } catch (err) {
             statusMessage.textContent = "Ошибка при отправке формы аналитики.";
-            submitButton.disabled = false; // Восстанавливаем кнопку при ошибке
+            submitButton.disabled = false;
             console.error(err);
         }
     });
@@ -117,18 +117,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     statusMessage.textContent = "Аналитика завершена.";
                     renderResults(data.result);
                     clearInterval(intervalId);
-                    submitButton.disabled = false; // Включаем кнопку после выполнения
+                    submitButton.disabled = false;
                 } else {
                     statusMessage.textContent = data.status === "failure"
                         ? "Ошибка выполнения аналитики: " + data.result
                         : "Неизвестный статус задачи.";
                     clearInterval(intervalId);
-                    submitButton.disabled = false; // Включаем кнопку при ошибке
+                    submitButton.disabled = false;
                 }
             } catch (err) {
                 statusMessage.textContent = "Ошибка проверки статуса.";
                 clearInterval(intervalId);
-                submitButton.disabled = false; // Включаем кнопку при ошибке
+                submitButton.disabled = false;
                 console.error(err);
             }
         }, 1000);
@@ -235,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     resultsContainer.appendChild(block);
 
-    // Данные и создание графика (ваш код без изменений)
+    // Данные и создание графика
     const allData = res.chat_activity.messages_per_minute;
     const keywordData = res.chat_activity.keyword_messages_per_minute || {};
     const categoryIntervals = res.chat_activity.category_intervals || [];
