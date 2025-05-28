@@ -96,3 +96,11 @@ def worker_status():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@main.route('/about')
+def about():
+    return render_template('about.html')
+
+@main.route('/faq')
+def faq():
+    return render_template('faq.html')
